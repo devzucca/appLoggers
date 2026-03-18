@@ -125,6 +125,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       security-events: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -157,5 +158,6 @@ jobs:
       - name: Dependency Submission
         uses: mikepenz/gradle-dependency-submission@v1
         with:
+          gradle-project-path: sdk
           gradle-build-module: ':'
           gradle-build-configuration: 'compileClasspath'
