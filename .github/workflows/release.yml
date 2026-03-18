@@ -33,7 +33,7 @@ jobs:
 
       - name: Upload Test Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pre-release-test-reports
           path: |
@@ -70,7 +70,7 @@ jobs:
         run: ./gradlew dokkaHtmlMultiModule
 
       - name: Upload API Docs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: api-docs
           path: sdk/build/dokka/htmlMultiModule/
