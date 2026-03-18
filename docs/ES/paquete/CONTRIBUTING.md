@@ -43,33 +43,24 @@ Este proyecto sigue el [Contributor Covenant v2.1](https://www.contributor-coven
 
 ## 3. Configuración del Entorno de Desarrollo
 
-### 3.1 Prerrequisitos
+> **Guía completa:** Para una configuración detallada paso a paso — incluyendo JDK, Docker, git hooks, CI local con `act`, y resolución de problemas — ver [`dev-environment.md`](./dev-environment.md).
 
-- **JDK 17** (recomendado: Eclipse Temurin)
-- **Android Studio Iguana+** o IntelliJ IDEA 2024+
-- **Git 2.40+**
-
-### 3.2 Fork y clone
+### Resumen rápido
 
 ```bash
-# 1. Fork del repositorio en GitHub (botón "Fork")
+# 1. Clonar
+git clone https://github.com/devzucca/appLoggers.git && cd appLoggers
 
-# 2. Clonar tu fork
-git clone https://github.com/TU_USUARIO/appLoggers.git
-cd appLoggers
+# 2. Registrar hooks (lint + tests antes de cada push)
+git config core.hooksPath .githooks
 
-# 3. Añadir el upstream
-git remote add upstream https://github.com/devzucca/appLoggers.git
+# 3. Crear local.properties con tus claves
+cp local.properties.example local.properties
+# → Editar local.properties con sdk.dir y keys de Supabase
+
+# 4. Verificar que todo compila
+cd sdk && ./gradlew detekt :logger-core:jvmTest :logger-test:jvmTest
 ```
-
-### 3.3 Verificar que todo compila y los tests pasan
-
-```bash
-./gradlew build
-./gradlew test
-```
-
-Si algo falla en este punto, abrir un issue antes de continuar.
 
 ### 3.4 Estructura de ramas
 
