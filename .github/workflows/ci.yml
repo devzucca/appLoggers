@@ -22,7 +22,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
@@ -51,7 +51,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
@@ -99,7 +99,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
@@ -139,7 +139,7 @@ jobs:
           languages: java-kotlin
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
 
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
