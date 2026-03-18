@@ -14,7 +14,7 @@ Monorepo de telemetría técnica — **SDK** · Frontend · CLI.
 
 - [Estructura del Repositorio](#estructura-del-repositorio)
 - [Características](#características)
-- [⚙️ Configuración del Entorno](#️-configuración-del-entorno)
+- [⚙️ Configuración del Entorno](#configuración-del-entorno)
 - [Instalación](#instalación)
 - [Inicio Rápido](#inicio-rápido)
 - [Backend — Supabase Setup](#backend--supabase-setup)

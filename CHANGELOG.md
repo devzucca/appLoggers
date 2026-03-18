@@ -9,10 +9,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 ## [Unreleased]
 
 ### Planned
-- Módulo `logger-transport-firebase` — transporte a Firebase Realtime Database
-- Soporte para `logger-transport-grpc` — envío directo vía gRPC a un servidor custom
-- Soporte Wear OS en `PlatformDetector`
-- Dashboard web de visualización de logs en tiempo real
+- `logger-transport-firebase` module — transport to Firebase Realtime Database
+- Support for `logger-transport-grpc` — direct delivery via gRPC to a custom server
+- Wear OS support in `PlatformDetector`
+- Web dashboard for real-time log visualization
 
 ---
 

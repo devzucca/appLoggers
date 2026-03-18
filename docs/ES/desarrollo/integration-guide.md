@@ -79,10 +79,10 @@ En el `build.gradle.kts` del módulo `app`:
 ```kotlin
 dependencies {
     // Core del logger (obligatorio)
-    implementation("com.github.devzucca.appLoggers:logger-core:0.1.0-alpha.1")
+    implementation("com.github.devzucca.appLoggers:logger-core:v0.1.0-alpha.1")
 
     // Módulo de transporte Supabase (opcional — incluido en el core)
-    // implementation("com.github.devzucca.appLoggers:logger-transport-supabase:0.1.0-alpha.1")
+    // implementation("com.github.devzucca.appLoggers:logger-transport-supabase:v0.1.0-alpha.1")
 }
 ```
 

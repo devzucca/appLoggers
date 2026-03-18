@@ -37,7 +37,7 @@ GROUP=com.github.devzucca
 POM_ARTIFACT_ID=appLoggers
 VERSION_NAME=0.1.0-alpha.1
 
-POM_NAME=AppLoggers
+POM_NAME=AppLogger
 POM_DESCRIPTION=Kotlin Multiplatform SDK for structured technical telemetry on Android/TV/iOS/JVM
 POM_URL=https://github.com/devzucca/appLoggers
 POM_LICENCE_NAME=MIT License

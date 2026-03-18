@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://github.com/devzucca/appLoggers'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'DevZucca' => 'devzucca@github.com' }
-  s.source           = { :http => "https://github.com/devzucca/appLoggers/releases/download/#{s.version}/AppLogger.xcframework.zip" }
+  s.source           = { :http => "https://github.com/devzucca/appLoggers/releases/download/v#{s.version}/AppLogger.xcframework.zip" }
 
   s.ios.deployment_target  = '14.0'
   s.tvos.deployment_target = '14.0'
