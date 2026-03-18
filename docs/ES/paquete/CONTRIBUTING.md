@@ -55,11 +55,11 @@ Este proyecto sigue el [Contributor Covenant v2.1](https://www.contributor-coven
 # 1. Fork del repositorio en GitHub (botón "Fork")
 
 # 2. Clonar tu fork
-git clone https://github.com/TU_USUARIO/app-logger.git
-cd app-logger
+git clone https://github.com/TU_USUARIO/appLoggers.git
+cd appLoggers
 
 # 3. Añadir el upstream
-git remote add upstream https://github.com/TuOrganizacion/app-logger.git
+git remote add upstream https://github.com/devzucca/appLoggers.git
 ```
 
 ### 3.3 Verificar que todo compila y los tests pasan
@@ -76,7 +76,7 @@ Si algo falla en este punto, abrir un issue antes de continuar.
 | Rama | Propósito |
 |---|---|
 | `main` | Código estable del último release |
-| `develop` | Integración de features en desarrollo |
+| `dev` | Integración de features en desarrollo |
 | `feature/nombre-descriptivo` | Tu contribución |
 | `fix/nombre-del-bug` | Un bugfix |
 
@@ -137,9 +137,9 @@ Toda modificación en `logger-core` debe estar acompañada de:
 ### 5.1 Antes de abrir el PR
 
 ```bash
-# Mantener tu rama actualizada con upstream/develop
+# Mantener tu rama actualizada con upstream/dev
 git fetch upstream
-git rebase upstream/develop
+git rebase upstream/dev
 
 # Verificar que los tests pasan
 ./gradlew test
@@ -178,7 +178,7 @@ Al abrir un PR, el template pedirá:
 - Los PRs requieren **1 review aprobado** de un maintainer.
 - Los PRs que cambian la API pública requieren **2 reviews**.
 - El CI (GitHub Actions) debe estar en verde antes del merge.
-- Se hace **Squash Merge** a `develop` para mantener historial limpio.
+- Se hace **Squash Merge** a `dev` para mantener historial limpio.
 
 ---
 
@@ -186,7 +186,7 @@ Al abrir un PR, el template pedirá:
 
 Usar el template de issue "Bug Report" en GitHub. Incluir:
 
-1. **Versión del SDK** (`AppLogger 0.1.1`).
+1. **Versión del SDK** (`AppLogger 0.1.0-alpha.1`).
 2. **Plataforma** (Android Mobile / Android TV / JVM).
 3. **Versión de Android** y modelo del dispositivo.
 4. **Pasos para reproducir** el problema.
