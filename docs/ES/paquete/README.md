@@ -35,7 +35,7 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.TuOrganizacion:app-logger:0.1.1")
+    implementation("com.github.TuOrganizacion:app-logger:0.1.0-alpha.1")
 }
 ```
 
@@ -71,15 +71,12 @@ AppLoggerSDK.metric("screen_load_time", 1234.0, "ms")
 
 | Documento | Descripción |
 |---|---|
-| [Investigación Técnica](docs-investigation/investigation.md) | Contexto, estándares de referencia, decisiones arquitectónicas |
-| [Base de Datos y Migraciones](docs-investigation/db-migration.md) | Esquema PostgreSQL/Supabase, RLS, retención, consultas |
-| [Privacidad y Cumplimiento](docs-investigation/privacy-compliance.md) | GDPR/LGPD, clasificación de datos, checklist |
-| [Guía de Integración](docs-develop/integration-guide.md) | Cómo integrar el SDK en una app, gRPC, WebSocket, Android TV |
-| [Arquitectura del Paquete](docs-package/architecture.md) | Traits, módulos, pipeline, extensibilidad |
-| [Testing](docs-package/testing.md) | Tests unitarios, FakeTransport, casos de resiliencia |
-| [Publicación](docs-package/publishing.md) | JitPack, GitHub Packages, Maven Central, CI/CD |
-| [CONTRIBUTING](docs-package/CONTRIBUTING.md) | Guía para contribuir al proyecto |
-| [CHANGELOG](docs-package/CHANGELOG.md) | Historial de versiones |
+| [Guía de Integración](../desarrollo/integration-guide.md) | Cómo integrar el SDK en una app, gRPC, WebSocket, Android TV |
+| [Arquitectura del Paquete](architecture.md) | Traits, módulos, pipeline, extensibilidad |
+| [Testing](testing.md) | Tests unitarios, FakeTransport, casos de resiliencia |
+| [Publicación](publishing.md) | JitPack, GitHub Packages, Maven Central, CI/CD |
+| [CONTRIBUTING](CONTRIBUTING.md) | Guía para contribuir al proyecto |
+| [CHANGELOG](CHANGELOG.md) | Historial de versiones |
 
 ---
 
@@ -121,4 +118,4 @@ MIT License — ver [LICENSE](LICENSE) para detalle.
 
 ## Contribuir
 
-Ver [docs-package/CONTRIBUTING.md](docs-package/CONTRIBUTING.md).
+Ver [CONTRIBUTING.md](CONTRIBUTING.md).

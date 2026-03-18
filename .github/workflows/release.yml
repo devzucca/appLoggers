@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+defaults:
+  run:
+    working-directory: sdk
+
 jobs:
   test:
     name: Pre-Release Tests
@@ -33,8 +37,8 @@ jobs:
         with:
           name: pre-release-test-reports
           path: |
-            **/build/reports/tests/
-            **/build/test-results/
+            sdk/**/build/reports/tests/
+            sdk/**/build/test-results/
           retention-days: 30
 
   publish:
@@ -69,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: api-docs
-          path: build/dokka/htmlMultiModule/
+          path: sdk/build/dokka/htmlMultiModule/
           retention-days: 90
 
       - name: Create GitHub Release

@@ -547,7 +547,7 @@ No. Todas las operaciones de red y disco ocurren en `Dispatchers.IO`. El hilo pr
 Los logs se almacenan en SQLite local (buffer circular FIFO). Cuando vuelve la conectividad, el SDK los envía automáticamente.
 
 **¿Puedo usar AppLogger sin Supabase?**  
-Sí. La arquitectura basada en traits permite implementar un `LogTransport` personalizado para cualquier backend. Ver la arquitectura de `LogTransport` en [docs-package/architecture.md](../docs-package/architecture.md).
+Sí. La arquitectura basada en traits permite implementar un `LogTransport` personalizado para cualquier backend. Ver la arquitectura de `LogTransport` en [architecture.md](../paquete/architecture.md).
 
 **¿Los logs de DEBUG se envían a producción?**  
 No. En modo producción (`debugMode = false`), los eventos de nivel `DEBUG` son filtrados automáticamente y no abandonan el dispositivo.

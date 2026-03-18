@@ -6,6 +6,10 @@ on:
   push:
     branches: [ main, develop ]
 
+defaults:
+  run:
+    working-directory: sdk
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -31,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: detekt-reports
-          path: build/reports/detekt/
+          path: sdk/build/reports/detekt/
           retention-days: 14
 
   test:
@@ -61,7 +65,7 @@ jobs:
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: '**/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml'
+          files: 'sdk/**/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml'
           flags: unittests
           fail_ci_if_error: false
         env:
@@ -73,9 +77,9 @@ jobs:
         with:
           name: test-reports
           path: |
-            **/build/reports/tests/
-            **/build/test-results/
-            **/build/reports/jacoco/
+            sdk/**/build/reports/tests/
+            sdk/**/build/test-results/
+            sdk/**/build/reports/jacoco/
           retention-days: 14
 
       - name: Build
@@ -113,8 +117,8 @@ jobs:
         with:
           name: e2e-reports
           path: |
-            **/build/reports/tests/
-            **/build/test-results/
+            sdk/**/build/reports/tests/
+            sdk/**/build/test-results/
           retention-days: 14
 
   security:

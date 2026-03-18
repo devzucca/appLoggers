@@ -44,8 +44,8 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/) y el p
 - **Política de privacidad por diseño**: sin captura de PII, `session_id` efímero, `user_id` opcional con consentimiento.
 - **Retrocompatibilidad con crash handlers existentes**: el SDK encadena el handler previo, no lo reemplaza.
 - **Soporte TLS obligatorio**: el builder rechaza endpoints HTTP en modo producción.
-- **Documentación completa**: `docs-investigation/`, `docs-develop/`, `docs-package/`.
-- **Scripts SQL de migración**: `migrations/001` a `migrations/005` para PostgreSQL / Supabase.
+- **Documentación completa**: `docs/ES/desarrollo/`, `docs/ES/paquete/`.
+- **Scripts SQL de migración**: `docs/ES/migraciones/001` a `docs/ES/migraciones/005` para PostgreSQL / Supabase.
 - **CI/CD con GitHub Actions**: workflows de test en PRs y release automático en tags.
 
 ### Changed

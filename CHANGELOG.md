@@ -15,7 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 - **Certificate pinning support** — `SupabaseTransport` accepts a custom `HttpClient`.
 - **KDoc** — comprehensive English documentation on all 19 public API files.
 - **iOS distribution** — `Package.swift` (SPM) and `AppLogger.podspec` (CocoaPods).
-- **XCFramework** task in `logger-core/build.gradle.kts`.
+- **XCFramework** task in `sdk/logger-core/build.gradle.kts`.
 - **Dokka** — API docs generation configured with CI upload.
 - **Conventional Commits** — git hook enforcer in `.githooks/commit-msg`.
 - **CodeQL security scanning** in CI workflow.
@@ -55,8 +55,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 - **Privacy by design**: no PII captured, ephemeral `session_id`, optional `user_id` with consent.
 - **Crash handler chaining**: SDK chains the previous handler, never replaces it.
 - **Mandatory TLS**: builder rejects HTTP endpoints in production mode.
-- **Complete documentation**: `docs-investigation/`, `docs-develop/`, `docs-package/`.
-- **SQL migrations**: `migrations/001` to `migrations/005` for PostgreSQL / Supabase.
+- **Complete documentation**: `docs/ES/desarrollo/`, `docs/ES/paquete/`.
+- **SQL migrations**: `docs/ES/migraciones/001` a `docs/ES/migraciones/005` for PostgreSQL / Supabase.
 - **CI/CD with GitHub Actions**: test workflows on PRs and automated release on tags.
 
 ### Security

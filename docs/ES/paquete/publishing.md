@@ -53,10 +53,10 @@ POM_SCM_URL=https://github.com/TuOrganizacion/app-logger
 
 ### 2.1 Script compartido `publish.gradle.kts`
 
-Crear en la raíz del proyecto `scripts/publish.gradle.kts`:
+Crear en la raíz del proyecto SDK `scripts/publish.gradle.kts`:
 
 ```kotlin
-// scripts/publish.gradle.kts
+// sdk/scripts/publish.gradle.kts
 // Aplicar en cada módulo publicable: apply(from = rootProject.file("scripts/publish.gradle.kts"))
 
 plugins {
@@ -416,9 +416,9 @@ Antes de crear un tag de release, verificar:
 ### 8.2 Documentación
 
 - [ ] El `README.md` principal tiene la versión actualizada en el snippet de instalación
-- [ ] Los cambios de API están documentados en `docs-package/architecture.md`
+- [ ] Los cambios de API están documentados en `architecture.md`
 - [ ] Si hay breaking changes, están marcados en `CHANGELOG.md` con `BREAKING:`
-- [ ] La matriz de compatibilidad (Android/iOS/JVM) está actualizada en `docs-develop/integration-guide.md`
+- [ ] La matriz de compatibilidad (Android/iOS/JVM) está actualizada en `../desarrollo/integration-guide.md`
 
 ### 8.3 Seguridad
 

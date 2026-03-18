@@ -1,8 +1,6 @@
-# AppLogger
+# AppLoggers
 
-SDK de telemetría técnica estructurada para Kotlin Multiplatform — Android Mobile · Android TV · iOS · JVM.
-
-Captura errores, crashes y métricas de performance de forma segura, sin impactar la UI ni comprometer la privacidad de los usuarios.
+Monorepo de herramientas de telemetría técnica — SDK · Frontend · CLI.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1+-purple.svg)](https://kotlinlang.org)
@@ -10,7 +8,38 @@ Captura errores, crashes y métricas de performance de forma segura, sin impacta
 
 ---
 
-## Características
+## Estructura del Repositorio
+
+```
+appLoggers/
+├── sdk/                            ← SDK Kotlin Multiplatform (Android · iOS · JVM)
+│   ├── logger-core/                ← Módulo KMP principal
+│   ├── logger-transport-supabase/  ← Transporte a Supabase
+│   ├── logger-test/                ← Utilidades de testing
+│   ├── sample/                     ← App Android de ejemplo
+│   ├── scripts/                    ← Scripts de publicación y migraciones
+│   ├── build.gradle.kts            ← Build raíz del SDK
+│   └── gradlew / gradlew.bat      ← Gradle wrapper
+├── docs/
+│   ├── ES/                         ← Documentación en español
+│   │   ├── desarrollo/             ← Guías de integración
+│   │   ├── paquete/                ← Arquitectura, testing, publicación
+│   │   └── migraciones/            ← Scripts SQL para Supabase/PostgreSQL
+│   └── EN/                         ← (Próximamente) Documentación en inglés
+├── .github/workflows/              ← CI/CD (test en PRs, release en tags)
+├── frontend/                       ← (Próximamente) Dashboard de monitoreo
+└── cli/                            ← (Próximamente) Herramienta de línea de comandos
+```
+
+---
+
+## SDK — AppLogger
+
+SDK de telemetría técnica estructurada para Kotlin Multiplatform — Android Mobile · Android TV · iOS · JVM.
+
+Captura errores, crashes y métricas de performance de forma segura, sin impactar la UI ni comprometer la privacidad de los usuarios.
+
+### Características
 
 - **Kotlin Multiplatform** — un codebase para Android, iOS y JVM
 - **Trait-based architecture** — interfaces intercambiables, Clean Code, SOLID
@@ -20,23 +49,6 @@ Captura errores, crashes y métricas de performance de forma segura, sin impacta
 - **gRPC y WebSocket** — interceptores para flujos de alta velocidad
 - **Offline-first** — SQLite circular FIFO cuando no hay red
 - **Batería inteligente** — adapta flush según tipo de red y nivel de batería
-
----
-
-## Estructura del Proyecto
-
-```
-app-logger/
-├── logger-core/                    ← Módulo KMP principal (commonMain + androidMain + iosMain + jvmMain)
-├── logger-transport-supabase/      ← Transporte a Supabase (KMP, intercambiable)
-├── logger-test/                    ← Utilidades de testing (NoOpLogger, InMemoryLogger, FakeTransport)
-├── migrations/                     ← Scripts SQL para Supabase/PostgreSQL
-├── scripts/                        ← Scripts de publicación Gradle
-├── .github/workflows/              ← CI/CD (test en PRs, release en tags)
-├── docs-investigation/             ← Documentación de investigación
-├── docs-develop/                   ← Guías de integración
-└── docs-package/                   ← Arquitectura, testing, publicación
-```
 
 ---
 
@@ -57,13 +69,13 @@ dependencyResolutionManagement {
 // app/build.gradle.kts
 dependencies {
     // Core del logger (obligatorio)
-    implementation("com.github.zuccadev.app-logger:logger-core:0.1.1")
+    implementation("com.github.zuccadev.app-logger:logger-core:0.1.0-alpha.1")
 
     // Transporte Supabase (opcional — usar si tu backend es Supabase)
-    implementation("com.github.zuccadev.app-logger:logger-transport-supabase:0.1.1")
+    implementation("com.github.zuccadev.app-logger:logger-transport-supabase:0.1.0-alpha.1")
 
     // Utilidades de testing (solo para tests)
-    testImplementation("com.github.zuccadev.app-logger:logger-test:0.1.1")
+    testImplementation("com.github.zuccadev.app-logger:logger-test:0.1.0-alpha.1")
 }
 ```
 
@@ -85,8 +97,8 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.zuccadev:logger-core:0.1.1")
-    implementation("com.github.zuccadev:logger-transport-supabase:0.1.1")
+    implementation("com.github.zuccadev:logger-core:0.1.0-alpha.1")
+    implementation("com.github.zuccadev:logger-transport-supabase:0.1.0-alpha.1")
 }
 ```
 
@@ -243,11 +255,12 @@ android {
 
 ```bash
 # En el SQL Editor de Supabase, ejecutar en orden:
-migrations/001_create_app_logs.sql
-migrations/002_create_app_metrics.sql
-migrations/003_create_indexes.sql
-migrations/004_rls_policies.sql
-migrations/005_retention_policy.sql
+# Los archivos están en docs/ES/migraciones/
+docs/ES/migraciones/001_create_app_logs.sql
+docs/ES/migraciones/002_create_app_metrics.sql
+docs/ES/migraciones/003_create_indexes.sql
+docs/ES/migraciones/004_rls_policies.sql
+docs/ES/migraciones/005_retention_policy.sql
 ```
 
 3. Copia la **URL del proyecto** y la **anon key** a tu `local.properties`
@@ -259,15 +272,15 @@ migrations/005_retention_policy.sql
 ### Paso 1: Crear un release tag
 
 ```bash
-git tag -a v0.1.1 -m "Release 0.1.1"
-git push origin v0.1.1
+git tag -a v0.1.0-alpha.1 -m "Release 0.1.0-alpha.1"
+git push origin v0.1.0-alpha.1
 ```
 
 ### Paso 2: JitPack (automático)
 
 1. Ve a [jitpack.io](https://jitpack.io)
 2. Busca `zuccadev/app-logger`
-3. Haz clic en **Get it** junto al tag `v0.1.1`
+3. Haz clic en **Get it** junto al tag `v0.1.0-alpha.1`
 4. JitPack construye el artefacto automáticamente
 
 ### Paso 3: GitHub Packages (CI/CD)
@@ -275,8 +288,8 @@ git push origin v0.1.1
 El workflow `.github/workflows/release.yml` publica automáticamente al crear un tag `v*`:
 
 ```bash
-git tag -a v0.1.1 -m "Release 0.1.1"
-git push origin v0.1.1
+git tag -a v0.1.0-alpha.1 -m "Release 0.1.0-alpha.1"
+git push origin v0.1.0-alpha.1
 # → GitHub Actions ejecuta tests + publica a GitHub Packages
 ```
 
@@ -289,6 +302,7 @@ export OSSRH_PASSWORD="tu-password"
 export GPG_SIGNING_KEY="tu-clave-gpg"
 export GPG_SIGNING_PASSWD="tu-passphrase"
 
+cd sdk
 ./gradlew publish
 ```
 
@@ -321,6 +335,9 @@ val logger = NoOpTestLogger()
 ### Correr tests
 
 ```bash
+# Desde la raíz del repo
+cd sdk
+
 # Tests unitarios (sin red ni dispositivo)
 ./gradlew check
 
@@ -330,7 +347,7 @@ val logger = NoOpTestLogger()
   -PSUPABASE_STAGING_ANON_KEY="eyJ..."
 ```
 
-Ver documentación completa de testing en [docs-package/testing.md](docs-package/testing.md).
+Ver documentación completa de testing en [docs/ES/paquete/testing.md](docs/ES/paquete/testing.md).
 
 ---
 
@@ -338,17 +355,14 @@ Ver documentación completa de testing en [docs-package/testing.md](docs-package
 
 | Documento | Descripción |
 |---|---|
-| [Investigación Técnica](docs-investigation/investigation.md) | Decisiones arquitectónicas, estándares, diseño KMP |
-| [Base de Datos](docs-investigation/db-migration.md) | Esquema PostgreSQL, RLS, retención, migraciones |
-| [Privacidad](docs-investigation/privacy-compliance.md) | GDPR/LGPD/CCPA, clasificación de datos |
-| [Guía de Integración](docs-develop/integration-guide.md) | Cómo integrar el SDK en Android e iOS |
-| [App de Monitoreo](docs-develop/monitoring-app.md) | App externa para visualizar logs |
-| [Compatibilidad](docs-develop/api-compatibility.md) | Matriz de versiones soportadas |
-| [Arquitectura](docs-package/architecture.md) | Traits, módulos KMP, pipeline |
-| [Testing](docs-package/testing.md) | Estrategia de tests, FakeTransport |
-| [Publicación](docs-package/publishing.md) | JitPack, GitHub Packages, Maven Central |
-| [Contribuir](docs-package/CONTRIBUTING.md) | Guía para contribuir al proyecto |
-| [Changelog](docs-package/CHANGELOG.md) | Historial de versiones |
+| [Guía de Integración](docs/ES/desarrollo/integration-guide.md) | Cómo integrar el SDK en Android e iOS |
+| [App de Monitoreo](docs/ES/desarrollo/monitoring-app.md) | App externa para visualizar logs |
+| [Compatibilidad](docs/ES/desarrollo/api-compatibility.md) | Matriz de versiones soportadas |
+| [Arquitectura](docs/ES/paquete/architecture.md) | Traits, módulos KMP, pipeline |
+| [Testing](docs/ES/paquete/testing.md) | Estrategia de tests, FakeTransport |
+| [Publicación](docs/ES/paquete/publishing.md) | JitPack, GitHub Packages, Maven Central |
+| [Contribuir](docs/ES/paquete/CONTRIBUTING.md) | Guía para contribuir al proyecto |
+| [Changelog](docs/ES/paquete/CHANGELOG.md) | Historial de versiones |
 
 ## Plataformas Soportadas
 
