@@ -9,7 +9,7 @@ plugins {
 }
 
 allprojects {
-    group = findProperty("GROUP")?.toString() ?: "com.github.zuccadev"
+    group = findProperty("GROUP")?.toString() ?: "com.github.devzucca"
     version = findProperty("VERSION_NAME")?.toString() ?: "0.1.0-alpha.1"
 }
 
@@ -28,6 +28,52 @@ detekt {
 
 subprojects {
     afterEvaluate {
+        // POM enrichment for all modules with maven-publish
+        if (plugins.hasPlugin("maven-publish")) {
+            extensions.configure<PublishingExtension> {
+                publications.withType<MavenPublication> {
+                    groupId = project.findProperty("GROUP")?.toString() ?: "com.github.devzucca"
+                    version = project.findProperty("VERSION_NAME")?.toString() ?: "0.1.0-alpha.1"
+
+                    pom {
+                        name.set(project.findProperty("POM_NAME")?.toString() ?: "AppLogger")
+                        description.set(project.findProperty("POM_DESCRIPTION")?.toString() ?: "")
+                        url.set(project.findProperty("POM_URL")?.toString() ?: "")
+
+                        licenses {
+                            license {
+                                name.set(project.findProperty("POM_LICENCE_NAME")?.toString() ?: "MIT License")
+                                url.set(project.findProperty("POM_LICENCE_URL")?.toString() ?: "")
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id.set(project.findProperty("POM_DEVELOPER_ID")?.toString() ?: "")
+                                name.set(project.findProperty("POM_DEVELOPER_NAME")?.toString() ?: "")
+                            }
+                        }
+
+                        scm {
+                            url.set(project.findProperty("POM_SCM_URL")?.toString() ?: "")
+                        }
+                    }
+                }
+
+                // GitHub Packages repo (only used in CI with ./gradlew publish)
+                repositories {
+                    maven {
+                        name = "GitHubPackages"
+                        url = uri("https://maven.pkg.github.com/devzucca/appLoggers")
+                        credentials {
+                            username = System.getenv("GITHUB_ACTOR") ?: ""
+                            password = System.getenv("GITHUB_TOKEN") ?: ""
+                        }
+                    }
+                }
+            }
+        }
+
         if (plugins.hasPlugin("org.jetbrains.kotlin.multiplatform") || plugins.hasPlugin("org.jetbrains.kotlin.android")) {
             apply(plugin = "jacoco")
             apply(plugin = "org.jetbrains.dokka")

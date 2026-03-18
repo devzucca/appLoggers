@@ -4,8 +4,8 @@
 afterEvaluate {
     publishing {
         publications.withType<MavenPublication> {
-            groupId = project.findProperty("GROUP")?.toString() ?: "com.github.zuccadev"
-            version = project.findProperty("VERSION_NAME")?.toString() ?: "0.1.1"
+            groupId = project.findProperty("GROUP")?.toString() ?: "com.github.devzucca"
+            version = project.findProperty("VERSION_NAME")?.toString() ?: "0.1.0-alpha.1"
 
             pom {
                 name.set(project.findProperty("POM_NAME")?.toString() ?: "AppLogger")
@@ -35,7 +35,7 @@ afterEvaluate {
         repositories {
             maven {
                 name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/zuccadev/app-logger")
+                url = uri("https://maven.pkg.github.com/devzucca/appLoggers")
                 credentials {
                     username = System.getenv("GITHUB_ACTOR") ?: ""
                     password = System.getenv("GITHUB_TOKEN") ?: ""

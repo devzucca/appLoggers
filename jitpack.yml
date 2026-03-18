@@ -1,0 +1,10 @@
+# JitPack build config — SDK lives in sdk/ subdirectory
+jdk:
+  - openjdk17
+
+before_install:
+  - cd sdk
+  - sed -i '/org.gradle.java.home/d' gradle.properties
+
+install:
+  - ./gradlew publishToMavenLocal -x test

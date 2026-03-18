@@ -69,13 +69,13 @@ dependencyResolutionManagement {
 // app/build.gradle.kts
 dependencies {
     // Core del logger (obligatorio)
-    implementation("com.github.zuccadev.app-logger:logger-core:0.1.0-alpha.1")
+    implementation("com.github.devzucca.appLoggers:logger-core:0.1.0-alpha.1")
 
     // Transporte Supabase (opcional — usar si tu backend es Supabase)
-    implementation("com.github.zuccadev.app-logger:logger-transport-supabase:0.1.0-alpha.1")
+    implementation("com.github.devzucca.appLoggers:logger-transport-supabase:0.1.0-alpha.1")
 
     // Utilidades de testing (solo para tests)
-    testImplementation("com.github.zuccadev.app-logger:logger-test:0.1.0-alpha.1")
+    testImplementation("com.github.devzucca.appLoggers:logger-test:0.1.0-alpha.1")
 }
 ```
 
@@ -86,7 +86,7 @@ dependencies {
 dependencyResolutionManagement {
     repositories {
         maven {
-            url = uri("https://maven.pkg.github.com/zuccadev/app-logger")
+            url = uri("https://maven.pkg.github.com/devzucca/appLoggers")
             credentials {
                 username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR")
                 password = providers.gradleProperty("gpr.token").orNull ?: System.getenv("GITHUB_TOKEN")
@@ -97,8 +97,8 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.zuccadev:logger-core:0.1.0-alpha.1")
-    implementation("com.github.zuccadev:logger-transport-supabase:0.1.0-alpha.1")
+    implementation("com.github.devzucca:logger-core:0.1.0-alpha.1")
+    implementation("com.github.devzucca:logger-transport-supabase:0.1.0-alpha.1")
 }
 ```
 
@@ -279,7 +279,7 @@ git push origin v0.1.0-alpha.1
 ### Paso 2: JitPack (automático)
 
 1. Ve a [jitpack.io](https://jitpack.io)
-2. Busca `zuccadev/app-logger`
+2. Busca `devzucca/appLoggers`
 3. Haz clic en **Get it** junto al tag `v0.1.0-alpha.1`
 4. JitPack construye el artefacto automáticamente
 

@@ -15,7 +15,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "app-logger"
+rootProject.name = "appLoggers"
 
 include(":logger-core")
 include(":logger-transport-supabase")
