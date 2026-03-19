@@ -28,6 +28,9 @@ Load the relevant workflow skills under `.github/skills/` based on the task:
 5. Do not skip local validation before push.
 6. Do not merge Dependabot blindly; review diff, risk, checks, and workflow implications first.
 7. Do not finish a feature, fix, or refactor without checking whether docs or changelog need updates.
+8. Do not create a tag automatically after every merge to `main`.
+9. Documentation-only work may go `dev -> main` without any tag.
+10. Tag only when the merged change is release-worthy or the user explicitly wants a versioned release.
 
 ## Parallelization Strategy
 
@@ -49,9 +52,18 @@ Use parallel subagents only for exploration and audit. Do not parallelize writes
 6. Push `dev` only after local validation passes.
 7. Open and verify PR from `dev` to `main`.
 8. Merge only after checks pass.
-9. After `main` is verified, create and push the release tag.
-10. Review open Dependabot PRs and merge only when technically sound.
-11. Confirm docs and release state are current.
+9. Decide whether the merged change is tag-eligible.
+10. Only after `main` is verified and the change is tag-eligible, create and push the release tag.
+11. Review open Dependabot PRs and merge only when technically sound.
+12. Confirm docs and release state are current.
+
+## Intent Interpretation
+
+Interpret user requests strictly:
+
+1. `merge dev to main` means complete integration to `main`, not release tagging.
+2. `create tag`, `publish release`, or `ship version` means evaluate release-tag eligibility first.
+3. If the change is docs-only, workflow-only, or internal maintenance, merge may be correct while tagging is not.
 
 ## Output Format
 

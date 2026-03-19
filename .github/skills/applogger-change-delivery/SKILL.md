@@ -25,6 +25,8 @@ Trigger phrases include:
 3. Before pushing, run local validation relevant to the changed area.
 4. If CI behavior changed, validate with local `act` when practical.
 5. Review docs impact before push.
+6. Do not assume every merged PR should become a release tag.
+7. Treat merge-to-main and tag creation as separate decisions.
 
 ## Procedure
 
@@ -36,6 +38,7 @@ Trigger phrases include:
 6. Push the integrated change to `dev`.
 7. Open PR from `dev` to `main`.
 8. Merge only after checks are green.
+9. Decide whether the merged change is release-tag eligible before invoking the release flow.
 
 ## Parallelization Guidance
 
@@ -50,4 +53,4 @@ For larger changes, run read-only subagent passes in parallel before editing or 
 1. Report local validation results.
 2. Report whether docs changed or were intentionally unchanged.
 3. Report push/PR status.
-4. State whether the change is ready for tag flow or not.
+4. State whether the change is tag-eligible, not tag-eligible, or needs explicit release intent.
