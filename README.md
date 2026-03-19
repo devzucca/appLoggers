@@ -57,11 +57,10 @@ appLoggers/
 - **Kotlin Multiplatform** — un codebase para Android, iOS y JVM
 - **Trait-based architecture** — interfaces intercambiables, Clean Code, SOLID
 - **Fire-and-forget** — no bloquea el hilo llamador
-- **Adaptativo** — detecta Mobile vs TV y ajusta automáticamente
+- **Adaptativo** — detecta Mobile vs TV/WearOS y ajusta automáticamente batch, flush y stack traces
 - **Privacidad por diseño** — GDPR, LGPD, CCPA compliant
-- **gRPC y WebSocket** — interceptores para flujos de alta velocidad
-- **Offline-first** — SQLite circular FIFO cuando no hay red
-- **Batería inteligente** — adapta flush según tipo de red y nivel de batería
+- **Offline-first** — buffer FIFO en memoria con reintentos automáticos (backoff exponencial con jitter)
+- **Transporte intercambiable** — backend Supabase incluido; cualquier backend vía `LogTransport` custom
 
 ---
 
@@ -205,9 +204,11 @@ dependencies {
 }
 ```
 
-### iOS (Swift Package Manager)
+### iOS (KMP build + Swift host opcional)
 
 `logger-core` genera un XCFramework (`AppLogger.framework`) distribuible vía GitHub Releases o repositorio SPM.
+
+En auditoría interna, el foco es el build KMP de iOS (Kotlin -> framework). SPM/CocoaPods aplican al consumo desde app host nativa.
 
 ```swift
 import AppLogger
@@ -271,7 +272,7 @@ AppLoggerSDK.metric("screen_load_time", 1234.0, "ms", tags = mapOf("screen" to "
 AppLoggerSDK.debug("TAG", "Solo visible en debug")
 ```
 
-### iOS (Swift)
+### iOS (Host Swift, si aplica)
 
 ```swift
 import AppLogger
@@ -280,32 +281,6 @@ AppLoggerIos.shared.initialize(config: ...)
 
 AppLoggerIos.shared.error(tag: "PLAYER", message: "Playback failed")
 AppLoggerIos.shared.metric(name: "buffer_time", value: 420.0, unit: "ms")
-```
-
-### gRPC — Interceptor automático
-
-```kotlin
-val channel = ManagedChannelBuilder
-    .forAddress("api.tuapp.com", 443)
-    .useTransportSecurity()
-    .intercept(
-        GrpcLoggingInterceptor(
-            logger = AppLoggerSDK,
-            latencyThresholdMs = 500
-        )
-    )
-    .build()
-```
-
-### WebSocket — Listener wrapper
-
-```kotlin
-val loggingListener = LoggingWebSocketListener(
-    delegate = tuWebSocketListener,
-    logger = AppLoggerSDK,
-    tag = "WS_STREAM"
-)
-okHttpClient.newWebSocket(request, loggingListener)
 ```
 
 ---
@@ -488,7 +463,7 @@ Cuando el SDK esté estable, se publicará a Maven Central para distribución si
 |---|---|---|---|
 | Android Mobile | API 23 (6.0) | `androidMain` | ✅ |
 | Android TV | API 23 (6.0) | `androidMain` | ✅ |
-| iOS | iOS 15+ | `iosMain` → XCFramework | ✅ |
+| iOS | iOS 14+ | `iosMain` → XCFramework | ✅ |
 | JVM | JDK 11+ | `jvmMain` | ✅ |
 
 ---
