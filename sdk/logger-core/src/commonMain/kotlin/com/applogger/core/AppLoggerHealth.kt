@@ -55,6 +55,10 @@ object AppLoggerHealth {
         consecutiveFailures = 0,
         sdkVersion = AppLoggerVersion.NAME,
         eventsDroppedDueToBufferOverflow = buffer?.getOverflowCount() ?: 0,
-        bufferUtilizationPercentage = if (bufferCapacity > 0) (buffer?.size()?.toFloat() ?: 0f) / bufferCapacity * 100f else 0f
+        bufferUtilizationPercentage = if (bufferCapacity > 0) {
+            (buffer?.size()?.toFloat() ?: 0f) / bufferCapacity * 100f
+        } else {
+            0f
+        }
     )
 }

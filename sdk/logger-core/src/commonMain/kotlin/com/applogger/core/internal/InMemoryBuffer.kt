@@ -1,8 +1,8 @@
 package com.applogger.core.internal
 
+import com.applogger.core.BufferOverflowPolicy
 import com.applogger.core.LogBuffer
 import com.applogger.core.model.LogEvent
-import com.applogger.core.model.LogLevel
 
 /**
  * Buffer en memoria con capacidad limitada y política de overflow configurable.
@@ -12,22 +12,24 @@ import com.applogger.core.model.LogLevel
  */
 internal class InMemoryBuffer(
     private val maxCapacity: Int = 1000,
-    private val overflowPolicy: com.applogger.core.BufferOverflowPolicy = com.applogger.core.BufferOverflowPolicy.DISCARD_OLDEST
+    private val overflowPolicy: BufferOverflowPolicy = BufferOverflowPolicy.DISCARD_OLDEST
 ) : LogBuffer {
 
     private val buffer = ArrayDeque<LogEvent>()
-    private var overflowCount = 0
+    private var overflowCount = 0L
 
     override fun push(event: LogEvent): Boolean {
         platformSynchronized(buffer) {
             if (buffer.size >= maxCapacity) {
                 overflowCount++
                 when (overflowPolicy) {
-                    com.applogger.core.BufferOverflowPolicy.DISCARD_OLDEST -> buffer.removeFirst()
-                    com.applogger.core.BufferOverflowPolicy.DISCARD_NEWEST -> return@platformSynchronized false
-                    com.applogger.core.BufferOverflowPolicy.PRIORITY_AWARE -> {
+                    BufferOverflowPolicy.DISCARD_OLDEST -> buffer.removeFirst()
+                    BufferOverflowPolicy.DISCARD_NEWEST -> return@platformSynchronized false
+                    BufferOverflowPolicy.PRIORITY_AWARE -> {
                         // Descarta el evento de menor prioridad que no sea CRITICAL
-                        val indexToRemove = buffer.indexOfFirst { it.level != com.applogger.core.model.LogLevel.CRITICAL }
+                        val indexToRemove = buffer.indexOfFirst {
+                            it.level != com.applogger.core.model.LogLevel.CRITICAL
+                        }
                         if (indexToRemove != -1) {
                             buffer.removeAt(indexToRemove)
                         } else {
