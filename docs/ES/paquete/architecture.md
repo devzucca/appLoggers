@@ -85,40 +85,33 @@ appLoggers/
 │       │           └── SessionManager.kt
 │       │
 │       ├── androidMain/kotlin/
-│       │   └── com/applogger/
-│       │       ├── AppLoggerSDK.kt          (entry point Android)
-│       │       ├── AppLoggerConfig.kt       (Builder)
-│       │       ├── AndroidDeviceInfoProvider.kt  (actual)
-│       │       ├── AndroidCrashHandler.kt   (actual)
+│       │   └── com/applogger/core/
+│       │       ├── AppLoggerSDK.kt               (entry point Android)
 │       │       ├── AppLoggerLifecycleObserver.kt
-│       │       ├── SqliteOfflineBuffer.kt   (SQLDelight)
+│       │       ├── AndroidDeviceInfoProvider.kt  (actual)
+│       │       ├── AndroidCrashHandler.kt        (actual)
 │       │       ├── PlatformDetector.kt
-│       │       └── interceptors/
-│       │           ├── GrpcLoggingInterceptor.kt
-│       │           └── LoggingWebSocketListener.kt
+│       │       └── Platform.android.kt
 │       │
 │       ├── iosMain/kotlin/
-│       │   └── com/applogger/
-│       │       ├── AppLoggerSDK.kt          (entry point iOS — expuesto a Swift)
-│       │       ├── IosDeviceInfoProvider.kt (actual)
-│       │       ├── IosCrashHandler.kt       (actual — NSSetUncaughtExceptionHandler)
-│       │       ├── SqliteOfflineBuffer.kt   (SQLDelight Kotlin/Native)
-│       │       └── URLSessionLoggingDelegate.kt
+│       │   └── com/applogger/core/
+│       │       ├── AppLoggerIos.kt               (entry point iOS en Kotlin)
+│       │       ├── IosDeviceInfoProvider.kt      (actual)
+│       │       ├── IosCrashHandler.kt            (actual)
+│       │       └── Platform.ios.kt
 │       │
 │       └── jvmMain/kotlin/
-│           └── com/applogger/
-│               ├── JvmDeviceInfoProvider.kt (actual)
-│               └── JvmCrashHandler.kt       (actual)
+│           └── com/applogger/core/
+│               └── Platform.jvm.kt
 │
 ├── logger-transport-supabase/           ← Módulo de transporte (KMP, intercambiable)
 │   └── src/commonMain/kotlin/
 │       └── com/applogger/transport/supabase/
 │           └── SupabaseTransport.kt     (Ktor client KMP)
 │
-└── logger-transport-grpc/               ← Transporte gRPC (solo androidMain)
-    └── src/androidMain/kotlin/
-        └── com/applogger/transport/grpc/
-            └── GrpcTransport.kt
+└── logger-test/                         ← Utilidades de testing para consumidores del SDK
+    └── src/commonMain/kotlin/
+        └── com/applogger/test/
 ```
 
 ### 2.1 Configuración `build.gradle.kts` del módulo core
@@ -197,7 +190,7 @@ AppLoggerImpl (implements AppLogger)
        │
        ├── DeviceInfoProvider ──▶ AndroidDeviceInfoProvider
        ├── LogFilter          ──▶ RateLimitFilter (+ chain)
-       ├── LogBuffer          ──▶ InMemoryBuffer / SqliteOfflineBuffer
+       ├── LogBuffer          —▶ InMemoryBuffer (default; SQLDelight schema disponible en commonMain para extensión)
        ├── LogFormatter       ──▶ JsonLogFormatter
        ├── LogTransport       ──▶ SupabaseTransport / NoOpTransport / Custom
        └── CrashHandler       ──▶ AndroidCrashHandler / NoOpCrashHandler
@@ -692,7 +685,7 @@ data class AppLoggerConfig internal constructor(
 
 ## 9. Extensibilidad — Implementar Transportes Propios
 
-Para usar un backend diferente a Supabase (Firebase, Datadog, servidor gRPC propio), implementar `LogTransport`:
+Para usar un backend diferente a Supabase (Firebase, Datadog, servidor HTTP propio, etc.), implementar `LogTransport`:
 
 ```kotlin
 // Ejemplo: transporte a Firebase Realtime Database
@@ -874,12 +867,12 @@ data class LogEvent(
 En Kotlin/Native (iOS), el modelo de concurrencia es diferente al de JVM. A partir de Kotlin 1.9+ el new memory model elimina la mayoría de las restricciones, pero hay consideraciones:
 
 - **`Channel`**: Compatible con el new memory model. Funciona igual que en JVM.
-- **`CoroutineScope`**: Usar `MainScope()` en entrypoints iOS para integración con el main thread de Swift.
+- **`CoroutineScope`**: Usar `MainScope()` en entrypoints iOS para integración con el main thread de la app.
 - **Frozen objects**: Con el new memory model ya no es necesario `freeze()` manual.
 - **Dispatchers**: En iOS, `Dispatchers.Default` usa threads de GCD (Grand Central Dispatch).
 
 ```kotlin
-// iosMain — entry point expuesto a Swift
+// iosMain — entry point Kotlin para iOS
 object AppLoggerSDK {
     private val scope = MainScope()    // iOS main thread integration
 
@@ -905,5 +898,5 @@ object AppLoggerSDK {
 | Consumidor | Artefacto | Cómo incluirlo |
 |---|---|---|
 | Android (Gradle) | `.aar` via maven-publish | `implementation("com.github.devzucca.appLoggers:logger-core:v0.1.0-alpha.1")` |
-| iOS (Swift) | XCFramework | Swift Package Manager (`Package.swift`) |
+| iOS (KMP puro) | XCFramework | Build con Gradle KMP desde `iosMain` |
 | JVM (Gradle) | `.jar` via maven-publish | `implementation("com.github.devzucca.appLoggers:logger-core:v0.1.0-alpha.1")` |

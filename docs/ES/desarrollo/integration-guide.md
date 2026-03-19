@@ -15,15 +15,14 @@ Documentación para desarrolladores que consumen `AppLogger` en sus aplicaciones
 3. [Configuración por Entorno](#3-configuración-por-entorno)
 4. [Inicialización en Application](#4-inicialización-en-application)
 5. [Uso del Logger en la App](#5-uso-del-logger-en-la-app)
-6. [Integración con gRPC](#6-integración-con-grpc)
-7. [Integración con WebSockets](#7-integración-con-websockets)
-8. [Configuración para Android TV](#8-configuración-para-android-tv)
-9. [Integración en iOS (Swift)](#9-integración-en-ios-swift)
-10. [Matriz de Compatibilidad de Plataformas](#10-matriz-de-compatibilidad-de-plataformas)
-11. [App de Monitoreo Externo](#11-app-de-monitoreo-externo)
-12. [Modo Debug vs Producción](#12-modo-debug-vs-producción)
-13. [User ID Opcional — Con Consentimiento](#13-user-id-opcional--con-consentimiento)
-14. [Preguntas Frecuentes](#14-preguntas-frecuentes)
+6. [Transporte Custom — Implementar LogTransport](#6-transporte-custom--implementar-logtransport)
+7. [Configuración para Android TV](#7-configuración-para-android-tv)
+8. [Integración en iOS (KMP puro)](#8-integración-en-ios-kmp-puro)
+9. [Matriz de Compatibilidad de Plataformas](#9-matriz-de-compatibilidad-de-plataformas)
+10. [App de Monitoreo Externo](#10-app-de-monitoreo-externo)
+11. [Modo Debug vs Producción](#11-modo-debug-vs-producción)
+12. [User ID Opcional — Con Consentimiento](#12-user-id-opcional--con-consentimiento)
+13. [Preguntas Frecuentes](#13-preguntas-frecuentes)
 
 ---
 
@@ -117,6 +116,9 @@ Todas las variables se colocan en `local.properties` (no commiteable) y se mapea
 | `appLogger.lowStorageMode` | Boolean | `false` | Reduce buffer local y stack traces (para TV o dispositivos low-RAM) |
 | `appLogger.verboseTransport` | Boolean | `false` | Log detallado de cada batch enviado (solo debug) |
 | `appLogger.userId` | String | `null` | UUID anónimo del usuario (solo con consentimiento explícito) |
+| `appLogger.bufferSizeStrategy` | String | `FIXED` | Estrategia de tamaño: `FIXED`, `ADAPTIVE_TO_RAM`, `ADAPTIVE_TO_LOG_RATE` |
+| `appLogger.bufferOverflowPolicy` | String | `DISCARD_OLDEST` | Política ante overflow: `DISCARD_OLDEST`, `DISCARD_NEWEST`, `PRIORITY_AWARE` |
+| `appLogger.offlinePersistenceMode` | String | `NONE` | Persistencia offline: `NONE`, `CRITICAL_ONLY`, `ALL` |
 
 ### 3.2 Ejemplo completo de `local.properties`
 
@@ -162,6 +164,9 @@ android {
         buildConfigField("Int",     "LOGGER_MAX_STACK",      "${props["appLogger.maxStackTraceLines"] ?: 50}")
         buildConfigField("Boolean", "LOGGER_LOW_STORAGE",    "${props["appLogger.lowStorageMode"] ?: false}")
         buildConfigField("Boolean", "LOGGER_VERBOSE",        "${props["appLogger.verboseTransport"] ?: false}")
+        buildConfigField("String",  "LOGGER_BUFFER_STRATEGY", "\"${props["appLogger.bufferSizeStrategy"] ?: "FIXED"}\"")
+        buildConfigField("String",  "LOGGER_OVERFLOW_POLICY", "\"${props["appLogger.bufferOverflowPolicy"] ?: "DISCARD_OLDEST"}\"")
+        buildConfigField("String",  "LOGGER_PERSISTENCE_MODE", "\"${props["appLogger.offlinePersistenceMode"] ?: "NONE"}\"")
     }
 }
 ```
@@ -215,6 +220,29 @@ class MyApp : Application() {
                 .consoleOutput(BuildConfig.LOGGER_CONSOLE_OUTPUT)
                 .batchSize(BuildConfig.LOGGER_BATCH_SIZE)
                 .flushIntervalSeconds(BuildConfig.LOGGER_FLUSH_INTERVAL)
+                .maxStackTraceLines(BuildConfig.LOGGER_MAX_STACK)
+                // Opciones avanzadas (nuevas en 0.2.0):
+                .bufferSizeStrategy(
+                    when (BuildConfig.LOGGER_BUFFER_STRATEGY) {
+                        "ADAPTIVE_TO_RAM" -> BufferSizeStrategy.ADAPTIVE_TO_RAM
+                        "ADAPTIVE_TO_LOG_RATE" -> BufferSizeStrategy.ADAPTIVE_TO_LOG_RATE
+                        else -> BufferSizeStrategy.FIXED
+                    }
+                )
+                .bufferOverflowPolicy(
+                    when (BuildConfig.LOGGER_OVERFLOW_POLICY) {
+                        "DISCARD_NEWEST" -> BufferOverflowPolicy.DISCARD_NEWEST
+                        "PRIORITY_AWARE" -> BufferOverflowPolicy.PRIORITY_AWARE
+                        else -> BufferOverflowPolicy.DISCARD_OLDEST
+                    }
+                )
+                .offlinePersistenceMode(
+                    when (BuildConfig.LOGGER_PERSISTENCE_MODE) {
+                        "CRITICAL_ONLY" -> OfflinePersistenceMode.CRITICAL_ONLY
+                        "ALL" -> OfflinePersistenceMode.ALL
+                        else -> OfflinePersistenceMode.NONE
+                    }
+                )
                 .build()
         )
     }
@@ -235,11 +263,11 @@ Al llamar a `initialize()`, el SDK:
 
 1. Construye el `DeviceInfoProvider` con los metadatos del dispositivo.
 2. Inicia el `Channel<LogEvent>` en memoria para recibir eventos.
-3. Lanza un coroutine en `Dispatchers.IO` que procesa el canal.
+3. Lanza coroutines en `Dispatchers.Default` para procesar el canal y gestionar el flush periódico.
 4. Instala el `UncaughtExceptionHandler` (en modo producción).
 5. Registra un `LifecycleObserver` en `ProcessLifecycleOwner` para flush automático en background.
 
-Todo esto ocurre en `Dispatchers.IO`, **nunca en el hilo principal**.
+Todo esto ocurre **fuera del hilo principal**.
 
 ---
 
@@ -304,96 +332,95 @@ AppLoggerSDK.debug("AUTH", "Token: $accessToken")  // NUNCA
 
 ---
 
-## 6. Integración con gRPC
+## 6. Transporte Custom — Implementar LogTransport
 
-No llames al logger manualmente en cada llamada gRPC. Usa el interceptor proporcionado por el SDK:
+AppLogger separa la lógica de logging del transporte. `LogTransport` es el único punto de integración con cualquier backend. Para usar un backend diferente a Supabase (Firebase, Datadog, HTTP propio, etc.) implementa la interfaz:
 
-### 6.1 Añadir el interceptor al canal gRPC
-
-```kotlin
-import io.grpc.ManagedChannelBuilder
-import com.tuorg.applogger.interceptors.GrpcLoggingInterceptor
-
-val channel = ManagedChannelBuilder
-    .forAddress("api.tuapp.com", 443)
-    .useTransportSecurity()
-    .intercept(
-        GrpcLoggingInterceptor(
-            logger = AppLoggerSDK,
-            latencyThresholdMs = 500  // Solo loguea si la llamada tarda más de 500ms
-        )
-    )
-    .build()
-```
-
-### 6.2 El interceptor captura automáticamente
-
-- Llamadas que fallan con cualquier `status` distinto de `OK`.
-- Llamadas que superan el umbral de latencia configurado.
-- **No** loguea llamadas exitosas dentro del tiempo normal (sin overhead).
-- **No** loguea el contenido de los mensajes protobuf (solo el nombre del método y el status).
-
-### 6.3 Configuración avanzada del interceptor
+### 6.1 Implementar LogTransport
 
 ```kotlin
-GrpcLoggingInterceptor(
-    logger               = AppLoggerSDK,
-    latencyThresholdMs   = 1000,   // Umbral de latencia en ms (default: 500)
-    logSuccessfulCalls   = false,  // Log de llamadas exitosas — default: false
-    excludeMethods       = setOf("HealthCheck/Check")  // Métodos a excluir del log
-)
-```
+import com.applogger.core.LogTransport
+import com.applogger.core.TransportResult
+import com.applogger.core.model.LogEvent
 
----
+class MyBackendTransport(
+    private val endpoint: String,
+    private val apiKey: String
+) : LogTransport {
 
-## 7. Integración con WebSockets
-
-Envuelve tu `WebSocketListener` con el `LoggingWebSocketListener` del SDK:
-
-### 7.1 Con OkHttp
-
-```kotlin
-import com.tuorg.applogger.interceptors.LoggingWebSocketListener
-
-val originalListener = object : WebSocketListener() {
-    override fun onMessage(webSocket: WebSocket, text: String) {
-        // Tu lógica de negocio
+    override suspend fun send(events: List<LogEvent>): TransportResult {
+        return try {
+            // Serializar los eventos y enviarlos a tu backend.
+            // events contiene: level, tag, message, deviceInfo, sessionId, throwableInfo, extra...
+            val payload = events.map { serialize(it) }
+            myHttpClient.post(endpoint, payload, headers = mapOf("X-Api-Key" to apiKey))
+            TransportResult.Success
+        } catch (e: Exception) {
+            TransportResult.Failure(
+                reason = e.message ?: "Transport error",
+                retryable = true, // true → el SDK reintenta con backoff exponencial
+                cause = e
+            )
+        }
     }
-    override fun onOpen(webSocket: WebSocket, response: Response) {
-        // Tu lógica de negocio
+
+    override fun isAvailable(): Boolean {
+        // false → el SDK mantiene eventos en buffer y reintenta cuando isAvailable() vuelva a true.
+        return endpoint.isNotBlank() && apiKey.isNotBlank()
     }
 }
-
-// Envolver con el listener del SDK
-val loggingListener = LoggingWebSocketListener(
-    delegate = originalListener,
-    logger   = AppLoggerSDK,
-    tag      = "WS_STREAM"
-)
-
-// Usar el listener envuelto al conectar
-val request = Request.Builder().url("wss://tu-api.com/stream").build()
-okHttpClient.newWebSocket(request, loggingListener)
 ```
 
-### 7.2 Qué captura el LoggingWebSocketListener
+### 6.2 Inyectar al inicializar
 
-| Evento | ¿Se loguea? | Nivel |
+```kotlin
+val transport = MyBackendTransport(
+    endpoint = BuildConfig.LOGGER_URL,
+    apiKey = BuildConfig.LOGGER_KEY
+)
+
+AppLoggerSDK.initialize(
+    context = this,
+    config = AppLoggerConfig.Builder()
+        .endpoint(BuildConfig.LOGGER_URL)
+        .apiKey(BuildConfig.LOGGER_KEY)
+        .debugMode(BuildConfig.DEBUG)
+        .build(),
+    transport = transport
+)
+```
+
+### 6.3 Campos disponibles en `LogEvent`
+
+| Campo | Tipo | Descripción |
 |---|---|---|
-| `onOpen` | No | — |
-| `onMessage` | No (nunca el contenido) | — |
-| `onClosing` con código 1000 (normal) | No | — |
-| `onClosing` con código ≠ 1000 (anormal) | Sí | `WARN` |
-| `onFailure` | Sí | `ERROR` |
-| `onClosed` | No | — |
+| `id` | `String` | UUID único del evento |
+| `timestamp` | `Long` | Unix millis del momento del log |
+| `level` | `LogLevel` | DEBUG, INFO, WARN, ERROR, CRITICAL, METRIC |
+| `tag` | `String` | Etiqueta del módulo (máx 100 chars) |
+| `message` | `String` | Mensaje del log (máx 10 000 chars) |
+| `throwableInfo` | `ThrowableInfo?` | Tipo, mensaje y stack trace (si aplica) |
+| `deviceInfo` | `DeviceInfo` | Marca, modelo, OS, API level, plataforma, conexión |
+| `sessionId` | `String` | UUID efímero de la sesión |
+| `userId` | `String?` | UUID anónimo opcional (solo con consentimiento) |
+| `extra` | `Map<String, String>?` | Metadatos adicionales |
+| `sdkVersion` | `String` | Versión del SDK que generó el evento |
+
+### 6.4 Comportamiento de retry
+
+Si `send()` retorna `TransportResult.Failure(retryable = true)`, el SDK aplica **backoff exponencial con jitter**:
+
+- Máx. 5 reintentos por batch.
+- Delay: aleatorio entre `base/2` y `min(base × 2ⁿ, 30 s)` (base = 1 s).
+- Al agotar reintentos: eventos enviados al `DeadLetterQueue` en memoria.
 
 ---
 
-## 8. Configuración para Android TV
+## 7. Configuración para Android TV
 
 En Android TV, el SDK detecta automáticamente la plataforma y ajusta su comportamiento. Sin embargo, hay configuraciones adicionales recomendadas.
 
-### 8.1 El SDK detecta Android TV automáticamente
+### 7.1 El SDK detecta Android TV automáticamente
 
 No es necesario indicar explícitamente que la app es para TV. El `PlatformDetector` interno usa:
 
@@ -402,7 +429,9 @@ No es necesario indicar explícitamente que la app es para TV. El `PlatformDetec
 packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)  // → ANDROID_TV
 ```
 
-### 8.2 Ajustes recomendados para TV en el Builder
+### 7.2 Valores por defecto en Android TV
+
+> El SDK detecta automáticamente TV y aplica estos valores via `resolveForLowResource()`. Solo sobreescribelos si necesitas ajustar los defaults.
 
 ```kotlin
 AppLoggerSDK.initialize(
@@ -411,53 +440,137 @@ AppLoggerSDK.initialize(
         .endpoint(BuildConfig.LOGGER_URL)
         .apiKey(BuildConfig.LOGGER_KEY)
         .debugMode(BuildConfig.LOGGER_DEBUG_MODE)
-        // Ajustes específicos para TV
-        .batchSize(5)                    // Batch pequeño — menos RAM
-        .flushIntervalSeconds(60)        // Flush cada minuto (no cada 30s)
-        .maxStackTraceLines(5)           // Solo primeras 5 líneas del stack trace
-        .flushOnlyWhenIdle(true)         // Solo hace flush cuando la app está en pausa
+        // Valores aplicados automáticamente para TV (override solo si es necesario):
+        .batchSize(5)                 // Auto en TV: 5 eventos/batch (mobile: 20)
+        .flushIntervalSeconds(60)     // Auto en TV: flush cada 60 s (mobile: 30 s)
+        .maxStackTraceLines(5)        // Auto en TV: 5 líneas max (mobile: 50)
+        .flushOnlyWhenIdle(true)      // Auto en TV: flush solo en background
         .build()
 )
 ```
 
-### 8.3 Comportamiento automático en TV
+### 7.3 Comportamiento automático en TV
 
-- **Buffer SQLite FIFO**: si no hay internet, los logs se almacenan localmente. Máximo 100 registros. Al llegar al 101, se descarta el más antiguo.
-- **Stack traces truncados**: para ahorrar ancho de banda en conexiones de TV (frecuentemente limitadas a la velocidad del router doméstico).
-- **Retry con WiFi**: el SDK solo reintenta el envío cuando detecta conexión WiFi o Ethernet, nunca agota el plan de datos de un router con límite.
+- **Buffer en memoria FIFO (100 eventos)**: cuando el buffer está lleno, el evento más antiguo se descarta para dejar espacio al nuevo.
+- **Stack traces truncados**: máximo 5 líneas por excepción (vs 50 en mobile) para reducir el payload.
+- **Rate limiting reforzado**: máximo 30 eventos por tag por minuto (vs 120 en mobile).
+- **Flush idle**: flush solo al pasar a background (`flushOnlyWhenIdle = true`), minimizando actividad en foreground.
 
 ---
 
-## 9. Integración en iOS (Swift)
+## 8. Integración en iOS (KMP puro)
 
-El SDK KMP se expone a iOS como XCFramework. La forma recomendada de consumo es Swift Package Manager.
+En esta auditoría, iOS se trata como target KMP puro: configuración, inicialización y uso desde Kotlin (`commonMain` + `iosMain`).
 
-### 9.1 Inicialización en Swift
+### 8.1 Inicialización en `iosMain` (Kotlin)
 
-```swift
-import AppLogger
+El entry point iOS es `AppLoggerIos.shared` (definido en `iosMain`). Es distinto del singleton Android `AppLoggerSDK`.
 
-@main
-struct MyApp: App {
-    init() {
-        AppLoggerSDK.shared.initialize(
-            config: AppLoggerConfigBuilder()
-                .endpoint(endpoint: "https://tu-proyecto.supabase.co")
-                .apiKey(key: "eyJ...")
-                .debugMode(debug: false)
-                .build()
-        )
-    }
+```kotlin
+// iosMain
+import com.applogger.core.AppLoggerConfig
+import com.applogger.core.AppLoggerIos
+import com.applogger.transport.supabase.SupabaseTransport
+
+fun initializeLoggerIos(url: String, apiKey: String, debugMode: Boolean = false) {
+    val config = AppLoggerConfig.Builder()
+        .endpoint(url)
+        .apiKey(apiKey)
+        .debugMode(debugMode)
+        .batchSize(20)
+        .flushIntervalSeconds(30)
+        .maxStackTraceLines(50)
+        .build()
+
+    val transport = SupabaseTransport(endpoint = url, apiKey = apiKey)
+
+    AppLoggerIos.shared.initialize(
+        config = config,
+        transport = transport
+    )
 }
 ```
 
-### 9.2 Uso desde Swift
+### 8.2 Uso en iOS desde Kotlin
 
-```swift
-AppLoggerSDK.shared.info(tag: "PLAYER", message: "Playback started")
-AppLoggerSDK.shared.error(tag: "PAYMENT", message: "Transaction failed")
-AppLoggerSDK.shared.metric(name: "buffer_time", value: 420.0, unit: "ms")
+```kotlin
+AppLoggerIos.shared.info("PLAYER", "Playback started")
+AppLoggerIos.shared.error("PAYMENT", "Transaction failed", throwable = null)
+AppLoggerIos.shared.metric("buffer_time", 420.0, "ms")
+AppLoggerIos.shared.flush()
 ```
+
+### 8.3 Configuración avanzada
+
+En Kotlin, `AppLoggerConfig.Builder` soporta opciones de buffer y persistencia offline para ambos targets.
+
+```kotlin
+val config = AppLoggerConfig.Builder()
+    .endpoint("https://tu-proyecto.supabase.co")
+    .apiKey("eyJ...")
+    .debugMode(false)
+    .bufferSizeStrategy(BufferSizeStrategy.FIXED)
+    .bufferOverflowPolicy(BufferOverflowPolicy.DISCARD_OLDEST)
+    .offlinePersistenceMode(OfflinePersistenceMode.NONE)
+    .build()
+```
+
+---
+
+## 9. Manejo de Desconexión y Métricas de Salud
+
+### 9.1 Comportamiento ante pérdida de conectividad
+
+El SDK está diseñado para operar en redes inestables típicas de dispositivos móviles:
+
+- **Buffer local en memoria**: Los eventos se encolan en un buffer FIFO mientras no haya conectividad.
+- **Reintento inteligente**: Si el transporte reporta `isAvailable() = false`, el batch se reintenta con backoff exponencial + jitter (máx 5 reintentos).
+- **Dead Letter Queue**: Si se agotan los reintentos, los eventos se mueven a una cola de cartas muertas (en memoria) para diagnóstico posterior.
+- **Flush automático en reconexión**: Cuando `isAvailable()` vuelve a `true`, se envía automáticamente el buffer pendiente.
+
+### 9.2 Monitoreo de salud del SDK
+
+Puedes consultar el estado interno del logger en tiempo real:
+
+```kotlin
+val health = AppLoggerHealth.snapshot()
+if (!health.transportAvailable) {
+    // Mostrar banner "offline" en UI
+}
+if (health.bufferUtilizationPercentage > 80) {
+    // Alertar a SRE: buffer cerca de overflow
+}
+if (health.eventsDroppedDueToBufferOverflow > 0) {
+    // Reportar métrica de pérdida de logs
+}
+```
+
+**Campos expuestos:**
+
+| Campo | Descripción |
+|---|---|
+| `isInitialized` | `true` tras `initialize()` exitoso |
+| `transportAvailable` | `true` si el transporte tiene conectividad |
+| `bufferedEvents` | Número de eventos en el buffer pendientes de envío |
+| `deadLetterCount` | Eventos fallidos permanentemente (para análisis) |
+| `consecutiveFailures` | Conteo de fallos consecutivos del transporte |
+| `eventsDroppedDueToBufferOverflow` | Total de eventos descartados por overflow del buffer |
+| `bufferUtilizationPercentage` | Porcentaje de ocupación del buffer (0-100) |
+| `sdkVersion` | Versión del SDK |
+
+### 9.3 Objetivos operativos de telemetría
+
+Con la configuración por defecto (`bufferSize = 1000`, `DISCARD_OLDEST`), el SDK está diseñado para:
+
+- Minimizar pérdida de eventos en conectividad intermitente.
+- Evitar bloqueo del hilo de UI mediante envío asíncrono.
+- Exponer métricas de salud para detectar degradación (`eventsDroppedDueToBufferOverflow`, `bufferUtilizationPercentage`).
+
+Para requisitos más estrictos (ej. banca), se recomienda:
+
+- Aumentar `bufferSize` a 5000-10000 según pruebas de carga propias.
+- Usar `bufferOverflowPolicy = PRIORITY_AWARE` para preservar errores críticos.
+- Considerar `offlinePersistenceMode = CRITICAL_ONLY` para retención forzada de incidentes graves.
 
 ---
 
@@ -467,22 +580,14 @@ AppLoggerSDK.shared.metric(name: "buffer_time", value: 420.0, unit: "ms")
 |---|---|---|---|
 | Android Mobile | API 23 (Android 6.0) | API 26+ | API 21 queda fuera por estabilidad operativa en dispositivos low-RAM |
 | Android TV | API 23 (Android 6.0 TV) | API 28+ | Mismo sourceSet que Android Mobile (`androidMain`) |
-| iOS | iOS 15 | iOS 16+ | Distribución via XCFramework / SwiftPM |
+| iOS | iOS 14 | iOS 16+ | Distribución via XCFramework generado por Gradle KMP |
 | JVM | JDK 11 | JDK 17 | Soporte para herramientas internas y runners |
 
 ---
 
-## 11. App de Monitoreo Externo
+## 11. Modo Debug vs Producción
 
-> Documentación completa de la app de monitoreo en [monitoring-app.md](monitoring-app.md).
-
-El SDK solo escribe datos. La visualización se realiza desde una aplicación externa separada que consulta Supabase con credenciales de solo lectura.
-
----
-
-## 12. Modo Debug vs Producción
-
-### 12.1 Diferencias de comportamiento
+### 11.1 Diferencias de comportamiento
 
 | Comportamiento | Debug (`debugMode = true`) | Producción (`debugMode = false`) |
 |---|---|---|
@@ -492,7 +597,7 @@ El SDK solo escribe datos. La visualización se realiza desde una aplicación ex
 | Nivel de verbosidad | Todos los niveles | Solo INFO, WARN, ERROR, CRITICAL, METRIC |
 | SQLite local (fallback) | No | Sí |
 
-### 12.2 Control desde BuildConfig
+### 11.2 Control desde BuildConfig
 
 ```kotlin
 // El valor de LOGGER_DEBUG_MODE viene de local.properties → build.gradle
@@ -506,7 +611,7 @@ AppLoggerConfig.Builder()
 
 ---
 
-## 13. User ID Opcional — Con Consentimiento
+## 12. User ID Opcional — Con Consentimiento
 
 Por defecto, el `user_id` en todos los logs es `null`. Solo tiene sentido activarlo cuando el usuario ha dado consentimiento explícito para que sus logs sean correlacionables.
 
@@ -535,19 +640,19 @@ fun onPrivacyPolicyRevoked() {
 
 ---
 
-## 14. Preguntas Frecuentes
+## 13. Preguntas Frecuentes
 
 **¿La librería puede hacer que mi app crashee?**  
-No. El SDK está diseñado para ser infalible: todas las excepciones internas son capturadas silenciosamente. Usa `Channel.trySend()` (never-blocking) para recibir eventos. Si el transporte falla, los logs se encoloan en SQLite o se descartan — la app nunca se ve afectada.
+No. El SDK captura silenciosamente todas las excepciones internas. Usa `Channel.trySend()` (no bloqueante) para recibir eventos. Si el canal está al límite o el transporte falla, los eventos se descartan o reintentan — la app nunca se ve afectada.
 
 **¿Afecta al rendimiento de la UI?**  
 No. Todas las operaciones de red y disco ocurren en `Dispatchers.IO`. El hilo principal solo ejecuta `Channel.trySend()`, que es una operación de microsegundos.
 
 **¿Qué pasa si no hay internet?**  
-Los logs se almacenan en SQLite local (buffer circular FIFO). Cuando vuelve la conectividad, el SDK los envía automáticamente.
+Los logs se mantienen en el buffer en memoria (FIFO circular). Cuando el transporte vuelve a estar disponible (`isAvailable() = true`), el `BatchProcessor` los envía con retry automático (backoff exponencial).
 
 **¿Puedo usar AppLogger sin Supabase?**  
-Sí. La arquitectura basada en traits permite implementar un `LogTransport` personalizado para cualquier backend. Ver la arquitectura de `LogTransport` en [architecture.md](../paquete/architecture.md).
+Sí. Implementa la interfaz `LogTransport` para cualquier backend (ver [sección 6](#6-transporte-custom--implementar-logtransport) y [architecture.md](../paquete/architecture.md)).
 
 **¿Los logs de DEBUG se envían a producción?**  
 No. En modo producción (`debugMode = false`), los eventos de nivel `DEBUG` son filtrados automáticamente y no abandonan el dispositivo.

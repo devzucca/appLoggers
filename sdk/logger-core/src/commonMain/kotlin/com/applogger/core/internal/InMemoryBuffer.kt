@@ -1,21 +1,43 @@
 package com.applogger.core.internal
 
+import com.applogger.core.BufferOverflowPolicy
 import com.applogger.core.LogBuffer
 import com.applogger.core.model.LogEvent
 
 /**
- * Buffer en memoria con capacidad limitada (FIFO: descarta el más antiguo).
+ * Buffer en memoria con capacidad limitada y política de overflow configurable.
+ *
+ * @param maxCapacity Capacidad máxima del buffer (puede ser fija o calculada por estrategia).
+ * @param overflowPolicy Política a aplicar cuando el buffer está lleno.
  */
 internal class InMemoryBuffer(
-    private val maxCapacity: Int = 1000
+    private val maxCapacity: Int = 1000,
+    private val overflowPolicy: BufferOverflowPolicy = BufferOverflowPolicy.DISCARD_OLDEST
 ) : LogBuffer {
 
     private val buffer = ArrayDeque<LogEvent>()
+    private var overflowCount = 0L
 
     override fun push(event: LogEvent): Boolean {
         platformSynchronized(buffer) {
             if (buffer.size >= maxCapacity) {
-                buffer.removeFirst() // FIFO: descarta el más antiguo
+                overflowCount++
+                when (overflowPolicy) {
+                    BufferOverflowPolicy.DISCARD_OLDEST -> buffer.removeFirst()
+                    BufferOverflowPolicy.DISCARD_NEWEST -> return@platformSynchronized false
+                    BufferOverflowPolicy.PRIORITY_AWARE -> {
+                        // Descarta el evento de menor prioridad que no sea CRITICAL
+                        val indexToRemove = buffer.indexOfFirst {
+                            it.level != com.applogger.core.model.LogLevel.CRITICAL
+                        }
+                        if (indexToRemove != -1) {
+                            buffer.removeAt(indexToRemove)
+                        } else {
+                            // Todos son CRITICAL, descarta el más antiguo
+                            buffer.removeFirst()
+                        }
+                    }
+                }
             }
             buffer.addLast(event)
         }
@@ -41,4 +63,10 @@ internal class InMemoryBuffer(
     override fun clear() {
         platformSynchronized(buffer) { buffer.clear() }
     }
+
+    /**
+     * Returns the number of overflow events that have been discarded.
+     * This metric can be exposed via AppLoggerHealth for SLA monitoring.
+     */
+    fun getOverflowCount(): Long = overflowCount
 }

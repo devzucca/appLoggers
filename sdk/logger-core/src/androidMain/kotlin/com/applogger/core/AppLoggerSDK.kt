@@ -6,6 +6,12 @@ import com.applogger.core.internal.*
 import kotlin.concurrent.Volatile
 import java.util.concurrent.atomic.AtomicBoolean
 
+private const val LOW_RESOURCE_BUFFER_CAPACITY = 100
+private const val DEFAULT_BUFFER_CAPACITY = 1000
+private const val ADAPTIVE_RAM_PERCENTAGE = 0.001
+private const val MIN_ADAPTIVE_BUFFER_CAPACITY = 50
+private const val MAX_ADAPTIVE_BUFFER_CAPACITY = 5000
+
 /**
  * Android entry point for the AppLogger SDK.
  *
@@ -26,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @see AppLoggerConfig for configuration options.
  * @see com.applogger.transport.supabase.SupabaseTransport for the Supabase transport.
  */
+@Suppress("TooManyFunctions")
 object AppLoggerSDK : AppLogger {
 
     @Volatile
@@ -60,7 +67,14 @@ object AppLoggerSDK : AppLogger {
         val filter = ChainedLogFilter(
             listOf(RateLimitFilter(if (platform.isLowResource) 30 else 120))
         )
-        val buffer = InMemoryBuffer(if (platform.isLowResource) 100 else 1000)
+
+        val bufferCapacity = computeBufferCapacity(appContext, platform, resolvedConfig)
+
+        val buffer = InMemoryBuffer(
+            maxCapacity = bufferCapacity,
+            overflowPolicy = resolvedConfig.bufferOverflowPolicy
+        )
+
         val resolvedTransport = transport ?: NoOpTransport()
         val formatter = JsonLogFormatter()
 
@@ -82,11 +96,7 @@ object AppLoggerSDK : AppLogger {
         instance = impl
         implRef = impl
 
-        // Wire up health check API
-        AppLoggerHealth.processor = processor
-        AppLoggerHealth.transport = resolvedTransport
-        AppLoggerHealth.buffer = buffer
-        AppLoggerHealth.initialized = true
+        updateHealthReferences(processor, resolvedTransport, buffer, bufferCapacity)
 
         if (!resolvedConfig.isDebugMode) {
             val crashHandler = AndroidCrashHandler(impl)
@@ -124,6 +134,54 @@ object AppLoggerSDK : AppLogger {
 
     fun clearAnonymousUserId() {
         implRef?.clearUserId()
+    }
+
+    private fun computeBufferCapacity(
+        appContext: Context,
+        platform: Platform,
+        config: AppLoggerConfig
+    ): Int {
+        return when (config.bufferSizeStrategy) {
+            BufferSizeStrategy.FIXED -> defaultBufferCapacity(platform)
+            BufferSizeStrategy.ADAPTIVE_TO_RAM -> adaptiveRamBufferCapacity(appContext)
+            BufferSizeStrategy.ADAPTIVE_TO_LOG_RATE -> defaultBufferCapacity(platform)
+        }
+    }
+
+    private fun defaultBufferCapacity(platform: Platform): Int {
+        return if (platform.isLowResource) {
+            LOW_RESOURCE_BUFFER_CAPACITY
+        } else {
+            DEFAULT_BUFFER_CAPACITY
+        }
+    }
+
+    private fun adaptiveRamBufferCapacity(appContext: Context): Int {
+        val activityManager = appContext.getSystemService(
+            Context.ACTIVITY_SERVICE
+        ) as android.app.ActivityManager
+        val memoryInfo = android.app.ActivityManager.MemoryInfo()
+        activityManager.getMemoryInfo(memoryInfo)
+
+        val totalRam = memoryInfo.totalMem
+        val target = (totalRam * ADAPTIVE_RAM_PERCENTAGE).toInt()
+        return target.coerceIn(
+            MIN_ADAPTIVE_BUFFER_CAPACITY,
+            MAX_ADAPTIVE_BUFFER_CAPACITY
+        )
+    }
+
+    private fun updateHealthReferences(
+        processor: BatchProcessor,
+        transport: LogTransport,
+        buffer: InMemoryBuffer,
+        bufferCapacity: Int
+    ) {
+        AppLoggerHealth.processor = processor
+        AppLoggerHealth.transport = transport
+        AppLoggerHealth.buffer = buffer
+        AppLoggerHealth.bufferCapacity = bufferCapacity
+        AppLoggerHealth.initialized = true
     }
 }
 

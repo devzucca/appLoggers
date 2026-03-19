@@ -13,7 +13,7 @@ Documento de referencia rápida para compatibilidad mínima de plataforma y runt
 |---|---|---|---|
 | Android Mobile | API 23 (Android 6.0) | API 26+ | ART |
 | Android TV | API 23 (Android 6.0 TV) | API 28+ | ART |
-| iOS | iOS 15 | iOS 16+ | Kotlin/Native + Darwin |
+| iOS | iOS 14 | iOS 16+ | Kotlin/Native + Darwin |
 | JVM | JDK 11 | JDK 17 | HotSpot / OpenJDK |
 
 ---
@@ -37,7 +37,8 @@ Documento de referencia rápida para compatibilidad mínima de plataforma y runt
 ### iOS
 
 - Distribución via XCFramework
-- Integración recomendada con Swift Package Manager
+- Build principal via Kotlin Multiplatform (target iOS)
+- Integración recomendada: KMP puro (`commonMain` + `iosMain`) sin capa host externa
 
 ### JVM
 

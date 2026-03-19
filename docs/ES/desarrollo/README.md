@@ -18,5 +18,5 @@
 
 - Integración del SDK en Android e iOS
 - Configuración por entorno (debug/release)
-- Integración con gRPC y WebSockets
+- Integración con transportes custom mediante `LogTransport`
 - App de monitoreo externa para beta testers

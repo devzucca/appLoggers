@@ -10,7 +10,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/) y el p
 
 ### Planned
 - Módulo `logger-transport-firebase` — transporte a Firebase Realtime Database
-- Soporte para `logger-transport-grpc` — envío directo vía gRPC a un servidor custom
+- `SqliteOfflineBuffer` — persistencia FIFO en SQLite usando el esquema SQLDelight ya definido (`offline_logs`)
 - Soporte Wear OS en `PlatformDetector`
 - Dashboard web de visualización de logs en tiempo real
 
@@ -20,7 +20,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/) y el p
 
 ### Added
 - **`AppLogger` trait** — contrato público unificado de logging para Kotlin (Android / JVM).
-- **`LogTransport` trait** — abstracción de transporte intercambiable (REST, gRPC, stdio).
+- **`LogTransport` trait** — abstracción de transporte intercambiable para backends HTTP o implementaciones custom.
 - **`LogBuffer` trait** — almacenamiento temporal de eventos con política de overflow configurable.
 - **`LogFilter` trait** — filtrado de eventos con soporte de cadena de responsabilidad.
 - **`LogFormatter` trait** — serialización de `LogEvent` (implementación JSON incluida).
@@ -33,10 +33,9 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/) y el p
 - **`InMemoryLogger`** — implementación de test con assertions integradas.
 - **`FakeTransport`** — mock de transporte con control de éxito/fallo para tests.
 - **`SupabaseTransport`** — transporte a Supabase (PostgreSQL) con autenticación por `anon key`.
-- **`GrpcLoggingInterceptor`** — interceptor de `ClientInterceptor` para captura automática de anomalías gRPC.
-- **`LoggingWebSocketListener`** — wrapper de `WebSocketListener` para captura de fallos de WebSocket.
 - **`PlatformDetector`** — detección automática de `ANDROID_MOBILE`, `ANDROID_TV`, `WEAR_OS`, `JVM`.
-- **`SqliteOfflineBuffer`** — buffer persistente FIFO en SQLite para funcionamiento offline en Android TV.
+- **`InMemoryBuffer`** — buffer FIFO en memoria con descarte del evento más antiguo en overflow (capacidad: 1000 Mobile / 100 TV+WearOS).
+- **SQLDelight offline schema** — esquema `offline_logs` y queries FIFO definidos en SQLDelight; base para `SqliteOfflineBuffer` futuro.
 - **`AppLoggerLifecycleObserver`** — flush automático cuando la app entra en background.
 - **`AppLoggerConfig.Builder`** — constructor de configuración tipado con valores por defecto adaptativos por plataforma.
 - **`AppLoggerSDK`** — objeto singleton de entrada pública (Android), con inicialización idempotente.

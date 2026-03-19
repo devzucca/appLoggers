@@ -57,11 +57,10 @@ appLoggers/
 - **Kotlin Multiplatform** — un codebase para Android, iOS y JVM
 - **Trait-based architecture** — interfaces intercambiables, Clean Code, SOLID
 - **Fire-and-forget** — no bloquea el hilo llamador
-- **Adaptativo** — detecta Mobile vs TV y ajusta automáticamente
+- **Adaptativo** — detecta Mobile vs TV/WearOS y ajusta automáticamente batch, flush y stack traces
 - **Privacidad por diseño** — GDPR, LGPD, CCPA compliant
-- **gRPC y WebSocket** — interceptores para flujos de alta velocidad
-- **Offline-first** — SQLite circular FIFO cuando no hay red
-- **Batería inteligente** — adapta flush según tipo de red y nivel de batería
+- **Offline-first** — buffer FIFO en memoria con reintentos automáticos (backoff exponencial con jitter)
+- **Transporte intercambiable** — backend Supabase incluido; cualquier backend vía `LogTransport` custom
 
 ---
 
@@ -205,18 +204,19 @@ dependencies {
 }
 ```
 
-### iOS (Swift Package Manager)
+### iOS (KMP puro)
 
-`logger-core` genera un XCFramework (`AppLogger.framework`) distribuible vía GitHub Releases o repositorio SPM.
+`logger-core` genera el artefacto iOS desde `iosMain` usando Kotlin Multiplatform.
 
-```swift
-import AppLogger
+En este proyecto, la ruta oficial para iOS es KMP end-to-end: inicialización y uso en Kotlin (`commonMain`/`iosMain`).
 
+```kotlin
+// iosMain
 AppLoggerIos.shared.initialize(
-    config: AppLoggerConfig.Builder()
-        .endpoint(endpoint: "https://tu-proyecto.supabase.co")
-        .apiKey(key: "tu_anon_key")
-        .debugMode(debug: false)
+    config = AppLoggerConfig.Builder()
+        .endpoint("https://tu-proyecto.supabase.co")
+        .apiKey("tu_anon_key")
+        .debugMode(false)
         .build()
 )
 ```
@@ -271,41 +271,11 @@ AppLoggerSDK.metric("screen_load_time", 1234.0, "ms", tags = mapOf("screen" to "
 AppLoggerSDK.debug("TAG", "Solo visible en debug")
 ```
 
-### iOS (Swift)
-
-```swift
-import AppLogger
-
-AppLoggerIos.shared.initialize(config: ...)
-
-AppLoggerIos.shared.error(tag: "PLAYER", message: "Playback failed")
-AppLoggerIos.shared.metric(name: "buffer_time", value: 420.0, unit: "ms")
-```
-
-### gRPC — Interceptor automático
+### iOS (Kotlin `iosMain`)
 
 ```kotlin
-val channel = ManagedChannelBuilder
-    .forAddress("api.tuapp.com", 443)
-    .useTransportSecurity()
-    .intercept(
-        GrpcLoggingInterceptor(
-            logger = AppLoggerSDK,
-            latencyThresholdMs = 500
-        )
-    )
-    .build()
-```
-
-### WebSocket — Listener wrapper
-
-```kotlin
-val loggingListener = LoggingWebSocketListener(
-    delegate = tuWebSocketListener,
-    logger = AppLoggerSDK,
-    tag = "WS_STREAM"
-)
-okHttpClient.newWebSocket(request, loggingListener)
+AppLoggerIos.shared.error("PLAYER", "Playback failed", throwable = null)
+AppLoggerIos.shared.metric("buffer_time", 420.0, "ms")
 ```
 
 ---
@@ -488,7 +458,7 @@ Cuando el SDK esté estable, se publicará a Maven Central para distribución si
 |---|---|---|---|
 | Android Mobile | API 23 (6.0) | `androidMain` | ✅ |
 | Android TV | API 23 (6.0) | `androidMain` | ✅ |
-| iOS | iOS 15+ | `iosMain` → XCFramework | ✅ |
+| iOS | iOS 14+ | `iosMain` → XCFramework | ✅ |
 | JVM | JDK 11+ | `jvmMain` | ✅ |
 
 ---
