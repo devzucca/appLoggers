@@ -45,6 +45,9 @@ jobs:
     name: Publish & Release
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
 
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +67,8 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew publish
+          VERSION_NAME: ${{ github.ref_name }}
+        run: ./gradlew publish -PVERSION_NAME=${VERSION_NAME#v}
 
       - name: Generate API Documentation
         run: ./gradlew dokkaHtmlMultiModule
