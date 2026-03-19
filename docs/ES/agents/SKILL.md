@@ -3,6 +3,11 @@ name: applogger-kmp-integration
 description: Use this skill when integrating AppLogger in Android or iOS using Kotlin Multiplatform, validating configuration, initialization, health checks, and troubleshooting.
 ---
 
+> Canonical discovery location for Agent Skills-compatible clients:
+> `.github/skills/applogger-kmp-integration/SKILL.md`
+> 
+> This file is kept as a documentation mirror for the guides in `docs/ES/agents`.
+
 # AppLogger KMP Integration Skill
 
 ## When to use this skill

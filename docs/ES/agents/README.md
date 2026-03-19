@@ -1,12 +1,15 @@
 # Agents — Skills de Integración AppLogger
 
-Este directorio contiene **skills** (guías de dominio) para agentes de IA y desarrolladores que necesitan integrar AppLogger en proyectos externos.
+Este directorio contiene **guías de dominio** para agentes de IA y desarrolladores que necesitan integrar AppLogger en proyectos externos.
 
-Incluye un archivo estándar `SKILL.md` compatible con la especificación de Agent Skills.
+El skill canónico para discovery estándar de Agent Skills está en:
+`.github/skills/applogger-kmp-integration/SKILL.md`
+
+El archivo `docs/ES/agents/SKILL.md` se conserva como referencia documental en esta sección.
 
 | Skill | Plataforma | Archivo |
 |---|---|---|
-| Skill principal compatible Agent Skills | Android + iOS (KMP) | [SKILL.md](SKILL.md) |
+| Skill principal compatible Agent Skills | Android + iOS (KMP) | [../../../.github/skills/applogger-kmp-integration/SKILL.md](../../../.github/skills/applogger-kmp-integration/SKILL.md) |
 | Integrar AppLogger en app Android (Kotlin) | Android Mobile + TV | [android-integration.md](android-integration.md) |
 | Integrar AppLogger en iOS (KMP puro) | iOS 14+ | [ios-integration.md](ios-integration.md) |
 
