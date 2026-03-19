@@ -1237,7 +1237,7 @@ An agent has mastered this skill when it can:
 - `/standar-clis.md` - Complete Syncbin standard
 - `/docs/desarrollo/child-cli.md` - Child CLI development guide
 - `/docs/desarrollo/SISTEMA-PLUGINS.md` - Plugin system details
-- [Plugin Engineer Skill](../syncbin-plugin-engineer/SKILL.md) - Plugin-specific patterns
+- `syncbin-plugin-engineer` (optional companion skill if present in the host repository)
 
 ### External Resources
 - [Cobra Documentation](https://cobra.dev/)
