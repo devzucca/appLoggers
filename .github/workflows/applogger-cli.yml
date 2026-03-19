@@ -139,6 +139,7 @@ jobs:
           CGO_ENABLED: 0
           GOOS: ${{ matrix.os }}
           GOARCH: ${{ matrix.arch }}
+        shell: bash
         run: |
           go build \
             -ldflags="-s -w -X github.com/devzucca/appLoggers/cli/internal/cli.version=${{ env.VERSION }} -X github.com/devzucca/appLoggers/cli/internal/cli.commit=${{ env.COMMIT }} -X github.com/devzucca/appLoggers/cli/internal/cli.buildTime=${{ env.BUILD_TIME }}" \
