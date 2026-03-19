@@ -38,7 +38,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 - **`AppLoggerLifecycleObserver`** — automatic flush when app backgrounds.
 - **`AppLoggerConfig.Builder`** — typed configuration builder with adaptive defaults per platform.
 - **`AppLoggerSDK`** — public entry singleton (Android), idempotent initialization.
-- **`AppLoggerIos`** — public entry singleton (iOS), exported to Swift via KMP framework.
+- **`AppLoggerIos`** — public iOS entry singleton for Kotlin Multiplatform (`iosMain`).
 - **`logger-test` module** — testing utilities: `NoOpTestLogger`, `InMemoryLogger`, `FakeTransport`.
 - **Privacy by design**: no PII captured, ephemeral `session_id`, optional `user_id` with consent.
 - **Crash handler chaining**: SDK chains the previous handler, never replaces it.

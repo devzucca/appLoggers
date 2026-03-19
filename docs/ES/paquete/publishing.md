@@ -2,7 +2,7 @@
 
 **Versión:** 0.1.0-alpha.1  
 **Fecha:** 2026-03-17  
-**Plataformas objetivo:** JitPack · GitHub Packages · Maven Central · Swift Package Manager (iOS consumo)
+**Plataformas objetivo:** JitPack · GitHub Packages · Maven Central
 
 > Estado actual: JitPack es el canal más directo para consumo. GitHub Packages requiere una release etiquetada exitosa para que los artefactos aparezcan en la sección Packages del repositorio. Maven Central sigue siendo un objetivo de publicación, no un canal ya operativo.
 
@@ -183,7 +183,7 @@ Comandos útiles de publicación:
 ./gradlew publishKotlinMultiplatformPublicationToGitHubPackagesRepository
 ```
 
-Para iOS, el consumo habitual se hace vía XCFramework generado en CI y distribuido por release de GitHub o por repositorio SwiftPM.
+Para iOS, el consumo recomendado en este proyecto es KMP puro, compilando el target iOS desde Gradle.
 
 ---
 
@@ -434,4 +434,3 @@ Antes de crear un tag de release, verificar:
 - [ ] La build de JitPack fue activada y exitosa
 - [ ] El GitHub Release tiene release notes generadas
 - [ ] El XCFramework iOS fue generado y adjuntado al release
-- [ ] El manifiesto de SwiftPM apunta a la versión liberada

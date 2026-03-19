@@ -330,7 +330,8 @@ AppLoggerSDK.setAnonymousUserId(userId)
 AppLoggerSDK.clearAnonymousUserId()
 
 // Health check
-AppLoggerHealth.initialized        // Boolean
-AppLoggerHealth.transportAvailable // Boolean
-AppLoggerHealth.bufferedEventCount // Int
+val health = AppLoggerHealth.snapshot()
+health.isInitialized       // Boolean
+health.transportAvailable  // Boolean
+health.bufferedEvents      // Int
 ```

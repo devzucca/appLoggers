@@ -17,7 +17,7 @@ Documentación para desarrolladores que consumen `AppLogger` en sus aplicaciones
 5. [Uso del Logger en la App](#5-uso-del-logger-en-la-app)
 6. [Transporte Custom — Implementar LogTransport](#6-transporte-custom--implementar-logtransport)
 7. [Configuración para Android TV](#7-configuración-para-android-tv)
-8. [Integración en iOS (KMP build + host)](#8-integración-en-ios-kmp-build--host)
+8. [Integración en iOS (KMP puro)](#8-integración-en-ios-kmp-puro)
 9. [Matriz de Compatibilidad de Plataformas](#9-matriz-de-compatibilidad-de-plataformas)
 10. [App de Monitoreo Externo](#10-app-de-monitoreo-externo)
 11. [Modo Debug vs Producción](#11-modo-debug-vs-producción)
@@ -458,64 +458,62 @@ AppLoggerSDK.initialize(
 
 ---
 
-## 8. Integración en iOS (KMP build + host)
+## 8. Integración en iOS (KMP puro)
 
-En esta auditoría, iOS se trata como target de compilación KMP: Kotlin (`iosMain`) se empaqueta como framework iOS.
-Si existe una app host nativa, ese framework se consume desde Swift (SPM o CocoaPods).
+En esta auditoría, iOS se trata como target KMP puro: configuración, inicialización y uso desde Kotlin (`commonMain` + `iosMain`).
 
-### 8.1 Inicialización en Swift
+### 8.1 Inicialización en `iosMain` (Kotlin)
 
-El entry point iOS es la clase `AppLoggerIos` (definida en `iosMain`). Es distinta del singleton Android `AppLoggerSDK`.
+El entry point iOS es `AppLoggerIos.shared` (definido en `iosMain`). Es distinto del singleton Android `AppLoggerSDK`.
 
-```swift
-import AppLogger
+```kotlin
+// iosMain
+import com.applogger.core.AppLoggerConfig
+import com.applogger.core.AppLoggerIos
+import com.applogger.transport.supabase.SupabaseTransport
 
-@main
-struct MyApp: App {
-    init() {
-        let transport = SupabaseTransport(
-            endpoint: "https://tu-proyecto.supabase.co",
-            apiKey: "eyJ..."
-        )
-        AppLoggerIos.shared.initialize(
-            config: AppLoggerConfig.Builder()
-                .endpoint(url: "https://tu-proyecto.supabase.co")
-                .apiKey(key: "eyJ...")
-                .debugMode(debug: false)
-                .build(),
-            transport: transport
-        )
-    }
+fun initializeLoggerIos(url: String, apiKey: String, debugMode: Boolean = false) {
+    val config = AppLoggerConfig.Builder()
+        .endpoint(url)
+        .apiKey(apiKey)
+        .debugMode(debugMode)
+        .batchSize(20)
+        .flushIntervalSeconds(30)
+        .maxStackTraceLines(50)
+        .build()
+
+    val transport = SupabaseTransport(endpoint = url, apiKey = apiKey)
+
+    AppLoggerIos.shared.initialize(
+        config = config,
+        transport = transport
+    )
 }
 ```
 
-> **Nota**: el `transport` es diferente a Android — `SupabaseTransport` es KMP (usa Ktor Darwin engine para iOS).
+### 8.2 Uso en iOS desde Kotlin
 
-### 8.2 Uso desde Swift
-
-```swift
-AppLoggerIos.shared.info(tag: "PLAYER", message: "Playback started", extra: nil)
-AppLoggerIos.shared.error(tag: "PAYMENT", message: "Transaction failed", throwable: nil, extra: nil)
-AppLoggerIos.shared.metric(name: "buffer_time", value: 420.0, unit: "ms", tags: nil)
+```kotlin
+AppLoggerIos.shared.info("PLAYER", "Playback started")
+AppLoggerIos.shared.error("PAYMENT", "Transaction failed", throwable = null)
+AppLoggerIos.shared.metric("buffer_time", 420.0, "ms")
 AppLoggerIos.shared.flush()
 ```
 
-### 8.3 Configuración avanzada para iOS
+### 8.3 Configuración avanzada
 
-En Swift, el `AppLoggerConfig.Builder` soporta las mismas opciones que Android:
+En Kotlin, `AppLoggerConfig.Builder` soporta opciones de buffer y persistencia offline para ambos targets.
 
-```swift
-let config = AppLoggerConfig.Builder()
-    .endpoint(url: "https://tu-proyecto.supabase.co")
-    .apiKey(key: "eyJ...")
-    .debugMode(debug: false)
-    .batchSize(size: 20)                      // 1-100
-    .flushIntervalSeconds(sec: 30)           // 5-300
-    .maxStackTraceLines(lines: 50)           // 1-100
+```kotlin
+val config = AppLoggerConfig.Builder()
+    .endpoint("https://tu-proyecto.supabase.co")
+    .apiKey("eyJ...")
+    .debugMode(false)
+    .bufferSizeStrategy(BufferSizeStrategy.FIXED)
+    .bufferOverflowPolicy(BufferOverflowPolicy.DISCARD_OLDEST)
+    .offlinePersistenceMode(OfflinePersistenceMode.NONE)
     .build()
 ```
-
-> **Nota**: Las opciones avanzadas de buffer (`bufferSizeStrategy`, `bufferOverflowPolicy`, `offlinePersistenceMode`) están disponibles en Kotlin. En iOS, el builder actual no expone estas opciones directamente; para usarlas, se requiere una extensión nativa en `iosMain` que añada los métodos correspondientes al `Builder` KMP. Esto está planificado para la versión 0.2.0.
 
 ---
 
@@ -560,17 +558,17 @@ if (health.eventsDroppedDueToBufferOverflow > 0) {
 | `bufferUtilizationPercentage` | Porcentaje de ocupación del buffer (0-100) |
 | `sdkVersion` | Versión del SDK |
 
-### 9.3 SLA de telemetría
+### 9.3 Objetivos operativos de telemetría
 
-Con la configuración por defecto (`bufferSize = 1000`, `DISCARD_OLDEST`), el SDK garantiza:
+Con la configuración por defecto (`bufferSize = 1000`, `DISCARD_OLDEST`), el SDK está diseñado para:
 
-- **99.9% de eventos enviados** en condiciones de conectividad normal (outages < 5 min).
-- **0% de bloqueo de UI**: todas las operaciones son no-bloqueantes.
-- **Visibilidad total**: cualquier pérdida de evento es contabilizada en `eventsDroppedDueToBufferOverflow`.
+- Minimizar pérdida de eventos en conectividad intermitente.
+- Evitar bloqueo del hilo de UI mediante envío asíncrono.
+- Exponer métricas de salud para detectar degradación (`eventsDroppedDueToBufferOverflow`, `bufferUtilizationPercentage`).
 
 Para requisitos más estrictos (ej. banca), se recomienda:
 
-- Aumentar `bufferSize` a 5000-10000.
+- Aumentar `bufferSize` a 5000-10000 según pruebas de carga propias.
 - Usar `bufferOverflowPolicy = PRIORITY_AWARE` para preservar errores críticos.
 - Considerar `offlinePersistenceMode = CRITICAL_ONLY` para retención forzada de incidentes graves.
 
@@ -582,7 +580,7 @@ Para requisitos más estrictos (ej. banca), se recomienda:
 |---|---|---|---|
 | Android Mobile | API 23 (Android 6.0) | API 26+ | API 21 queda fuera por estabilidad operativa en dispositivos low-RAM |
 | Android TV | API 23 (Android 6.0 TV) | API 28+ | Mismo sourceSet que Android Mobile (`androidMain`) |
-| iOS | iOS 14 | iOS 16+ | Distribución via XCFramework / SwiftPM (podspec: `s.ios.deployment_target = '14.0'`) |
+| iOS | iOS 14 | iOS 16+ | Distribución via XCFramework generado por Gradle KMP |
 | JVM | JDK 11 | JDK 17 | Soporte para herramientas internas y runners |
 
 ---

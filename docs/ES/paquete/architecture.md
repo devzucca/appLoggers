@@ -95,7 +95,7 @@ appLoggers/
 │       │
 │       ├── iosMain/kotlin/
 │       │   └── com/applogger/core/
-│       │       ├── AppLoggerIos.kt               (entry point iOS — expuesto a Swift)
+│       │       ├── AppLoggerIos.kt               (entry point iOS en Kotlin)
 │       │       ├── IosDeviceInfoProvider.kt      (actual)
 │       │       ├── IosCrashHandler.kt            (actual)
 │       │       └── Platform.ios.kt
@@ -867,12 +867,12 @@ data class LogEvent(
 En Kotlin/Native (iOS), el modelo de concurrencia es diferente al de JVM. A partir de Kotlin 1.9+ el new memory model elimina la mayoría de las restricciones, pero hay consideraciones:
 
 - **`Channel`**: Compatible con el new memory model. Funciona igual que en JVM.
-- **`CoroutineScope`**: Usar `MainScope()` en entrypoints iOS para integración con el main thread de Swift.
+- **`CoroutineScope`**: Usar `MainScope()` en entrypoints iOS para integración con el main thread de la app.
 - **Frozen objects**: Con el new memory model ya no es necesario `freeze()` manual.
 - **Dispatchers**: En iOS, `Dispatchers.Default` usa threads de GCD (Grand Central Dispatch).
 
 ```kotlin
-// iosMain — entry point expuesto a Swift
+// iosMain — entry point Kotlin para iOS
 object AppLoggerSDK {
     private val scope = MainScope()    // iOS main thread integration
 
@@ -898,5 +898,5 @@ object AppLoggerSDK {
 | Consumidor | Artefacto | Cómo incluirlo |
 |---|---|---|
 | Android (Gradle) | `.aar` via maven-publish | `implementation("com.github.devzucca.appLoggers:logger-core:v0.1.0-alpha.1")` |
-| iOS (KMP build / host opcional) | XCFramework | Build con Gradle KMP; si hay host Swift, incluir con Swift Package Manager (`Package.swift`) |
+| iOS (KMP puro) | XCFramework | Build con Gradle KMP desde `iosMain` |
 | JVM (Gradle) | `.jar` via maven-publish | `implementation("com.github.devzucca.appLoggers:logger-core:v0.1.0-alpha.1")` |

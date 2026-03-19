@@ -38,7 +38,7 @@ Documento de referencia rápida para compatibilidad mínima de plataforma y runt
 
 - Distribución via XCFramework
 - Build principal via Kotlin Multiplatform (target iOS)
-- Si hay app host nativa, integración recomendada con Swift Package Manager
+- Integración recomendada: KMP puro (`commonMain` + `iosMain`) sin capa host externa
 
 ### JVM
 

@@ -204,20 +204,19 @@ dependencies {
 }
 ```
 
-### iOS (KMP build + Swift host opcional)
+### iOS (KMP puro)
 
-`logger-core` genera un XCFramework (`AppLogger.framework`) distribuible vía GitHub Releases o repositorio SPM.
+`logger-core` genera el artefacto iOS desde `iosMain` usando Kotlin Multiplatform.
 
-En auditoría interna, el foco es el build KMP de iOS (Kotlin -> framework). SPM/CocoaPods aplican al consumo desde app host nativa.
+En este proyecto, la ruta oficial para iOS es KMP end-to-end: inicialización y uso en Kotlin (`commonMain`/`iosMain`).
 
-```swift
-import AppLogger
-
+```kotlin
+// iosMain
 AppLoggerIos.shared.initialize(
-    config: AppLoggerConfig.Builder()
-        .endpoint(endpoint: "https://tu-proyecto.supabase.co")
-        .apiKey(key: "tu_anon_key")
-        .debugMode(debug: false)
+    config = AppLoggerConfig.Builder()
+        .endpoint("https://tu-proyecto.supabase.co")
+        .apiKey("tu_anon_key")
+        .debugMode(false)
         .build()
 )
 ```
@@ -272,15 +271,11 @@ AppLoggerSDK.metric("screen_load_time", 1234.0, "ms", tags = mapOf("screen" to "
 AppLoggerSDK.debug("TAG", "Solo visible en debug")
 ```
 
-### iOS (Host Swift, si aplica)
+### iOS (Kotlin `iosMain`)
 
-```swift
-import AppLogger
-
-AppLoggerIos.shared.initialize(config: ...)
-
-AppLoggerIos.shared.error(tag: "PLAYER", message: "Playback failed")
-AppLoggerIos.shared.metric(name: "buffer_time", value: 420.0, unit: "ms")
+```kotlin
+AppLoggerIos.shared.error("PLAYER", "Playback failed", throwable = null)
+AppLoggerIos.shared.metric("buffer_time", 420.0, "ms")
 ```
 
 ---
