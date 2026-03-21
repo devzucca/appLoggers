@@ -372,7 +372,8 @@ class MyApp : Application() {
             config = AppLoggerConfig.Builder()
                 .endpoint(BuildConfig.LOGGER_URL)
                 .apiKey(BuildConfig.LOGGER_KEY)
-                .debugMode(BuildConfig.DEBUG)
+                .debugMode(BuildConfig.LOGGER_DEBUG)
+                .consoleOutput(BuildConfig.LOGGER_DEBUG)
                 .batchSize(20)
                 .flushIntervalSeconds(30)
                 .build(),

@@ -35,6 +35,41 @@ Required keys:
 2. `appLogger.anonKey`
 3. `appLogger.debug`
 
+## Canonical imports and packages
+
+Use only these package roots in Android integration code:
+
+1. `com.applogger.core.AppLoggerSDK`
+2. `com.applogger.core.AppLoggerConfig`
+3. `com.applogger.core.AppLoggerHealth`
+4. `com.applogger.transport.supabase.SupabaseTransport`
+
+Do not use `com.applogger.sdk.*` imports.
+
+## Canonical initialization snippet (Android)
+
+```kotlin
+val transport = SupabaseTransport(
+	endpoint = BuildConfig.LOGGER_URL,
+	apiKey = BuildConfig.LOGGER_KEY
+)
+
+AppLoggerSDK.initialize(
+	context = this,
+	config = AppLoggerConfig.Builder()
+		.endpoint(BuildConfig.LOGGER_URL)
+		.apiKey(BuildConfig.LOGGER_KEY)
+		.debugMode(BuildConfig.LOGGER_DEBUG)
+		.consoleOutput(BuildConfig.LOGGER_DEBUG)
+		.batchSize(20)
+		.flushIntervalSeconds(30)
+		.build(),
+	transport = transport
+)
+```
+
+Logcat visibility rule: output is shown only when `isDebugMode=true` and `consoleOutput=true`.
+
 ## What not to do on first pass
 
 1. Do not replace every existing logger call in the whole codebase.

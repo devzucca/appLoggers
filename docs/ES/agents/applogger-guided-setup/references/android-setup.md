@@ -49,6 +49,30 @@ appLogger.anonKey=YOUR_ANON_KEY
 appLogger.debug=false
 ```
 
+## Debug output behavior
+
+- Effective rule: Logcat output happens only when `isDebugMode=true` **and** `consoleOutput=true`.
+- `appLogger.debug=true` usually enables Logcat because most setups map it to `debugMode` (and often to `consoleOutput`).
+- No additional Logcat configuration, tag setup, or Android logger wrapper is needed.
+- `appLogger.debug=false` (production default) disables Logcat output in the standard setup; no code change required.
+- Do **not** set `debug=true` in production builds.
+
+## Canonical imports (Android)
+
+```kotlin
+import com.applogger.core.AppLoggerConfig
+import com.applogger.core.AppLoggerHealth
+import com.applogger.core.AppLoggerSDK
+import com.applogger.transport.supabase.SupabaseTransport
+```
+
+Do not use `com.applogger.sdk.*` imports.
+
+SDK source references (anti-hallucination):
+
+1. `sdk/logger-core/src/commonMain/kotlin/com/applogger/core/internal/AppLoggerImpl.kt` — Logcat/console output guard.
+2. `sdk/logger-core/src/commonMain/kotlin/com/applogger/core/AppLoggerConfig.kt` — default `consoleOutput=true` in Builder.
+
 ## Initialization pattern
 
 Preferred initialization point: custom `Application`.
@@ -65,6 +89,7 @@ AppLoggerSDK.initialize(
         .endpoint(BuildConfig.LOGGER_URL)
         .apiKey(BuildConfig.LOGGER_KEY)
         .debugMode(BuildConfig.LOGGER_DEBUG)
+        .consoleOutput(BuildConfig.LOGGER_DEBUG)
         .batchSize(20)
         .flushIntervalSeconds(30)
         .build(),

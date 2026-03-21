@@ -10,7 +10,7 @@
 
 1. `appLogger.url`
 2. `appLogger.anonKey`
-3. `appLogger.debug`
+3. `appLogger.debug` — in the standard mapping, set `true` to enable `debugMode` and `consoleOutput` together (Logcat output)
 
 ## Edit rules
 
@@ -23,3 +23,5 @@
 1. Build config fields map keys correctly.
 2. SDK initializes with endpoint/apiKey.
 3. Smoke log call compiles.
+4. Android imports resolve under `com.applogger.core.*` and `com.applogger.transport.supabase.*`.
+5. If Logcat behavior is required, verify both flags: `isDebugMode=true` and `consoleOutput=true`.

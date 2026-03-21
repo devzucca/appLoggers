@@ -38,16 +38,16 @@ class InMemoryLogger : AppLogger {
     val lastError get() = _logs.lastOrNull { it.level == LogLevel.ERROR }
     val lastCritical get() = _logs.lastOrNull { it.level == LogLevel.CRITICAL }
 
-    override fun debug(tag: String, message: String, extra: Map<String, Any>?) {
-        _logs.add(LogEntry(LogLevel.DEBUG, tag, message, extra = extra))
+    override fun debug(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) {
+        _logs.add(LogEntry(LogLevel.DEBUG, tag, message, throwable, extra))
     }
 
-    override fun info(tag: String, message: String, extra: Map<String, Any>?) {
-        _logs.add(LogEntry(LogLevel.INFO, tag, message, extra = extra))
+    override fun info(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) {
+        _logs.add(LogEntry(LogLevel.INFO, tag, message, throwable, extra))
     }
 
-    override fun warn(tag: String, message: String, anomalyType: String?, extra: Map<String, Any>?) {
-        _logs.add(LogEntry(LogLevel.WARN, tag, message, extra = extra))
+    override fun warn(tag: String, message: String, throwable: Throwable?, anomalyType: String?, extra: Map<String, Any>?) {
+        _logs.add(LogEntry(LogLevel.WARN, tag, message, throwable, extra))
     }
 
     override fun error(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) {

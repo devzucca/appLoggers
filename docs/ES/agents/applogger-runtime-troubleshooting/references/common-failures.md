@@ -6,8 +6,15 @@
 4. Missing network permissions on Android.
 5. Initialization never called.
 6. AppLogger keys missing in `local.properties`.
+7. Wrong SDK imports (`com.applogger.sdk.*` instead of `com.applogger.core.*`).
+8. Misreading Logcat behavior: expecting console output with `isDebugMode=false`.
 
 Fix policy for `local.properties`:
 
 1. Add only missing keys.
 2. Preserve unrelated keys exactly as they are.
+
+Logcat rule to verify during debugging:
+
+1. Output is shown only when `isDebugMode=true` and `consoleOutput=true`.
+2. No additional Android logger wrapper is required for AppLogger console output.
