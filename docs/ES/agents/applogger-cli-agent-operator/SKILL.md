@@ -75,6 +75,32 @@ applogger-cli health --output json
 
 **Why?** The CLI may have new commands, output format changes, or schema updates between versions. Discovery ensures forward compatibility.
 
+### 1.1 Multi-Project Resolution (Corporate Mode)
+
+When operating multiple telemetry apps (for example `klinema` and `klinematv`),
+agents must resolve the active project deterministically.
+
+Resolution precedence:
+
+1. `--project <name>`
+2. `APPLOGGER_PROJECT`
+3. Workspace autodetection via `workspace_roots`
+4. `default_project`
+5. Single configured project
+6. Legacy environment variables (`appLogger_supabase*`, `APPLOGGER_SUPABASE_*`, `SUPABASE_*`)
+
+Project config path precedence:
+
+1. `--config <path>`
+2. `APPLOGGER_CONFIG`
+3. Default user config path (`os.UserConfigDir()/applogger/cli.json`)
+
+Rules for agents:
+
+- Prefer project profiles for production automation.
+- Prefer `api_key_env` in the JSON config instead of inline secrets.
+- Parse `project` and `config_source` from health/telemetry outputs for auditability.
+
 ### 2. Three Output Modes (Choose Wisely)
 
 | Mode | Use When | Example |
@@ -130,9 +156,9 @@ if ! command -v applogger-cli &> /dev/null; then
   exit 127
 fi
 
-# 2. Verify credentials are set
-if [ -z "$appLogger_supabaseUrl" ] || [ -z "$appLogger_supabaseKey" ]; then
-  echo "FATAL: appLogger_supabaseUrl or appLogger_supabaseKey not set"
+# 2. Verify project resolution inputs are set (project mode) OR legacy env vars exist
+if [ -z "$APPLOGGER_CONFIG" ] && { [ -z "$appLogger_supabaseUrl" ] || [ -z "$appLogger_supabaseKey" ]; }; then
+  echo "FATAL: set APPLOGGER_CONFIG (recommended) or appLogger_supabaseUrl/appLogger_supabaseKey"
   exit 1
 fi
 
@@ -143,8 +169,8 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
-# 4. Verify backend is healthy
-HEALTH=$(applogger-cli health --output json)
+# 4. Verify backend is healthy (optionally pin project)
+HEALTH=$(applogger-cli ${APPLOGGER_PROJECT:+--project "$APPLOGGER_PROJECT"} health --output json)
 if ! jq -e '.ok' <<< "$HEALTH" > /dev/null 2>&1; then
   echo "FATAL: Backend health check failed"
   echo "$HEALTH" | jq .
@@ -154,6 +180,8 @@ fi
 echo "✓ Pre-flight check passed"
 echo "  - CLI version: $VERSION"
 echo "  - Backend: $(jq '.services.supabase' <<< "$HEALTH")"
+echo "  - Project: $(jq -r '.project // "legacy-env"' <<< "$HEALTH")"
+echo "  - Config source: $(jq -r '.config_source // "environment"' <<< "$HEALTH")"
 ```
 
 ### Workflow 2: Safe Telemetry Query
