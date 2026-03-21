@@ -8,9 +8,9 @@
 
 ## Required keys
 
-1. `appLogger.url`
-2. `appLogger.anonKey`
-3. `appLogger.debug` — in the standard mapping, set `true` to enable `debugMode` and `consoleOutput` together (Logcat output)
+1. `appLogger_url`
+2. `appLogger_anonKey`
+3. `appLogger_debug` — in the standard mapping, set `true` to enable `debugMode` and `consoleOutput` together (Logcat output)
 
 ## Edit rules
 

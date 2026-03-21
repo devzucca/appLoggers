@@ -24,15 +24,15 @@ Examples:
 
 ## Required CLI env
 
-1. `APPLOGGER_SUPABASE_URL`
-2. `APPLOGGER_SUPABASE_KEY` (service_role)
+1. `appLogger_supabaseUrl`
+2. `appLogger_supabaseKey` (service_role)
 
 ## Optional CLI env
 
-1. `APPLOGGER_SUPABASE_SCHEMA`
-2. `APPLOGGER_SUPABASE_LOG_TABLE`
-3. `APPLOGGER_SUPABASE_METRIC_TABLE`
-4. `APPLOGGER_SUPABASE_TIMEOUT_SECONDS`
+1. `appLogger_supabaseSchema`
+2. `appLogger_supabaseLogTable`
+3. `appLogger_supabaseMetricTable`
+4. `appLogger_supabaseTimeoutSeconds`
 
 ## Workflow
 

@@ -47,12 +47,12 @@ func newAgentCommand() *cobra.Command {
 				DefaultOutput:   "text",
 				ContractVersion: "1.0.0",
 				EnvVars: []string{
-					"APPLOGGER_SUPABASE_URL",
-					"APPLOGGER_SUPABASE_KEY",
-					"APPLOGGER_SUPABASE_SCHEMA",
-					"APPLOGGER_SUPABASE_LOG_TABLE",
-					"APPLOGGER_SUPABASE_METRIC_TABLE",
-					"APPLOGGER_SUPABASE_TIMEOUT_SECONDS",
+					"appLogger_supabaseUrl",
+					"appLogger_supabaseKey",
+					"appLogger_supabaseSchema",
+					"appLogger_supabaseLogTable",
+					"appLogger_supabaseMetricTable",
+					"appLogger_supabaseTimeoutSeconds",
 				},
 				Commands: []commandContract{
 					{Command: "--syncbin-metadata", Description: "Metadata discovery endpoint", OutputModes: []string{"text", "json", "agent"}, Stable: true},

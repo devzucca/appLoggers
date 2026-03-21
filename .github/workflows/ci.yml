@@ -115,6 +115,7 @@ jobs:
 
       - name: Run E2E Tests against Supabase
         env:
+          appLogger_supabaseUrl: ${{ secrets.APPLOGGER_SUPABASE_URL }}
           APPLOGGER_SUPABASE_URL: ${{ secrets.APPLOGGER_SUPABASE_URL }}
           APPLOGGER_SUPABASE_ANON_KEY: ${{ secrets.APPLOGGER_SUPABASE_ANON_KEY }}
           APPLOGGER_SUPABASE_SERVICE_KEY: ${{ secrets.APPLOGGER_SUPABASE_SERVICE_KEY }}

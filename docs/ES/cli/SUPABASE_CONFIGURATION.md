@@ -54,15 +54,15 @@ Desde Supabase Dashboard:
 
 Variables requeridas para CLI:
 
-- `APPLOGGER_SUPABASE_URL`
-- `APPLOGGER_SUPABASE_KEY` (service_role)
+- `appLogger_supabaseUrl`
+- `appLogger_supabaseKey` (service_role)
 
 Opcionales:
 
-- `APPLOGGER_SUPABASE_SCHEMA` (default `public`)
-- `APPLOGGER_SUPABASE_LOG_TABLE` (default `app_logs`)
-- `APPLOGGER_SUPABASE_METRIC_TABLE` (default `app_metrics`)
-- `APPLOGGER_SUPABASE_TIMEOUT_SECONDS` (default `15`)
+- `appLogger_supabaseSchema` (default `public`)
+- `appLogger_supabaseLogTable` (default `app_logs`)
+- `appLogger_supabaseMetricTable` (default `app_metrics`)
+- `appLogger_supabaseTimeoutSeconds` (default `15`)
 
 ## Paso 3 - Crear usuario operativo del CLI
 
@@ -87,12 +87,12 @@ sudo install -m 600 -o root -g root /dev/null /etc/applogger-cli.env
 Contenido sugerido de `/etc/applogger-cli.env`:
 
 ```env
-APPLOGGER_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-APPLOGGER_SUPABASE_KEY=YOUR_SERVICE_ROLE_KEY
-APPLOGGER_SUPABASE_SCHEMA=public
-APPLOGGER_SUPABASE_LOG_TABLE=app_logs
-APPLOGGER_SUPABASE_METRIC_TABLE=app_metrics
-APPLOGGER_SUPABASE_TIMEOUT_SECONDS=15
+appLogger_supabaseUrl=https://YOUR_PROJECT.supabase.co
+appLogger_supabaseKey=YOUR_SERVICE_ROLE_KEY
+appLogger_supabaseSchema=public
+appLogger_supabaseLogTable=app_logs
+appLogger_supabaseMetricTable=app_metrics
+appLogger_supabaseTimeoutSeconds=15
 ```
 
 ### Windows
@@ -106,8 +106,8 @@ Opciones recomendadas:
 PowerShell para sesion actual:
 
 ```powershell
-$env:APPLOGGER_SUPABASE_URL = "https://YOUR_PROJECT.supabase.co"
-$env:APPLOGGER_SUPABASE_KEY = "YOUR_SERVICE_ROLE_KEY"
+$env:appLogger_supabaseUrl = "https://YOUR_PROJECT.supabase.co"
+$env:appLogger_supabaseKey = "YOUR_SERVICE_ROLE_KEY"
 ```
 
 ### CI/CD
@@ -120,8 +120,8 @@ Ejemplo GitHub Actions:
 
 ```yaml
 env:
-  APPLOGGER_SUPABASE_URL: ${{ secrets.APPLOGGER_SUPABASE_URL }}
-  APPLOGGER_SUPABASE_KEY: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
+  appLogger_supabaseUrl: ${{ secrets.APPLOGGER_SUPABASE_URL }}
+  appLogger_supabaseKey: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
 ```
 
 Para `act` en local, definir el mismo par en `.act.secrets`. Si el workflow referencia un secret ausente, `act` lo inyecta vacio.
@@ -162,7 +162,7 @@ Causas probables:
 
 Acciones:
 
-1. Verificar key cargada en `APPLOGGER_SUPABASE_KEY`.
+1. Verificar key cargada en `appLogger_supabaseKey`.
 2. Validar migraciones 004 y 006 aplicadas.
 
 ### Error de tabla no encontrada
@@ -175,7 +175,7 @@ Accion:
 
 ### Timeouts
 
-- Ajustar `APPLOGGER_SUPABASE_TIMEOUT_SECONDS` (1..120).
+- Ajustar `appLogger_supabaseTimeoutSeconds` (1..120).
 - Reducir rango temporal y limite en query.
 
 ## Matriz de responsabilidades

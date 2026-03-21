@@ -37,24 +37,24 @@ dependencies {
 
 If the project uses `local.properties`:
 
-1. Check whether these keys already exist: `appLogger.url`, `appLogger.anonKey`, `appLogger.debug`.
+1. Check whether these keys already exist: `appLogger_url`, `appLogger_anonKey`, `appLogger_debug`.
 2. Add only missing keys.
 3. Do not edit, remove, or rename any unrelated existing variable.
 
 Example append-only update:
 
 ```properties
-appLogger.url=https://YOUR-PROJECT.supabase.co
-appLogger.anonKey=YOUR_ANON_KEY
-appLogger.debug=false
+appLogger_url=https://YOUR-PROJECT.supabase.co
+appLogger_anonKey=YOUR_ANON_KEY
+appLogger_debug=false
 ```
 
 ## Debug output behavior
 
 - Effective rule: Logcat output happens only when `isDebugMode=true` **and** `consoleOutput=true`.
-- `appLogger.debug=true` usually enables Logcat because most setups map it to `debugMode` (and often to `consoleOutput`).
+- `appLogger_debug=true` usually enables Logcat because most setups map it to `debugMode` (and often to `consoleOutput`).
 - No additional Logcat configuration, tag setup, or Android logger wrapper is needed.
-- `appLogger.debug=false` (production default) disables Logcat output in the standard setup; no code change required.
+- `appLogger_debug=false` (production default) disables Logcat output in the standard setup; no code change required.
 - Do **not** set `debug=true` in production builds.
 
 ## Canonical imports (Android)

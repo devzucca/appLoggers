@@ -63,12 +63,12 @@ Notes:
 
 The CLI reads Supabase configuration from environment variables:
 
-- `APPLOGGER_SUPABASE_URL` (required)
-- `APPLOGGER_SUPABASE_KEY` (required, service_role key for CLI reads)
-- `APPLOGGER_SUPABASE_SCHEMA` (optional, default `public`)
-- `APPLOGGER_SUPABASE_LOG_TABLE` (optional, default `app_logs`)
-- `APPLOGGER_SUPABASE_METRIC_TABLE` (optional, default `app_metrics`)
-- `APPLOGGER_SUPABASE_TIMEOUT_SECONDS` (optional, default `15`)
+- `appLogger_supabaseUrl` (required)
+- `appLogger_supabaseKey` (required, service_role key for CLI reads)
+- `appLogger_supabaseSchema` (optional, default `public`)
+- `appLogger_supabaseLogTable` (optional, default `app_logs`)
+- `appLogger_supabaseMetricTable` (optional, default `app_metrics`)
+- `appLogger_supabaseTimeoutSeconds` (optional, default `15`)
 
 Fallback aliases are supported for compatibility:
 
@@ -78,30 +78,30 @@ Fallback aliases are supported for compatibility:
 ### Export Variables (PowerShell)
 
 ```powershell
-$env:APPLOGGER_SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
-$env:APPLOGGER_SUPABASE_KEY="YOUR_SUPABASE_SERVICE_ROLE_KEY"
+$env:appLogger_supabaseUrl="https://YOUR_PROJECT_REF.supabase.co"
+$env:appLogger_supabaseKey="YOUR_SUPABASE_SERVICE_ROLE_KEY"
 ```
 
 ### Export Variables (CMD)
 
 ```cmd
-set APPLOGGER_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-set APPLOGGER_SUPABASE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+set appLogger_supabaseUrl=https://YOUR_PROJECT_REF.supabase.co
+set appLogger_supabaseKey=YOUR_SUPABASE_SERVICE_ROLE_KEY
 ```
 
 ### Export Variables (Bash/Zsh)
 
 ```bash
-export APPLOGGER_SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
-export APPLOGGER_SUPABASE_KEY="YOUR_SUPABASE_SERVICE_ROLE_KEY"
+export appLogger_supabaseUrl="https://YOUR_PROJECT_REF.supabase.co"
+export appLogger_supabaseKey="YOUR_SUPABASE_SERVICE_ROLE_KEY"
 ```
 
 ### If You Are Using Supabase MCP
 
 You can resolve values before export with:
 
-1. `mcp_supabase_get_project_url` for `APPLOGGER_SUPABASE_URL`
-2. `APPLOGGER_SUPABASE_KEY` must be provisioned from secure secrets storage (service_role)
+1. `mcp_supabase_get_project_url` for `appLogger_supabaseUrl`
+2. `appLogger_supabaseKey` must be provisioned from secure secrets storage (service_role)
 
 ## Examples
 

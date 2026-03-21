@@ -106,33 +106,33 @@ Todas las variables se colocan en `local.properties` (no commiteable) y se mapea
 
 | Variable | Tipo | Valor por defecto | Descripción |
 |---|---|---|---|
-| `appLogger.url` | String | `""` | Endpoint del backend (Supabase URL o URL propia) |
-| `appLogger.anonKey` | String | `""` | API key de autenticación (anon key de Supabase) |
-| `appLogger.debug` | Boolean | `false` | Modo debug: logs van a Logcat en vez de backend |
-| `appLogger.logToConsole` | Boolean | `true` | Mostrar logs en Logcat (solo en debug) |
-| `appLogger.batchSize` | Int | `20` | Número de eventos por batch antes de enviar (1-100) |
-| `appLogger.flushIntervalSeconds` | Int | `30` | Intervalo máximo en segundos antes de flush automático (5-300) |
-| `appLogger.maxStackTraceLines` | Int | `50` | Líneas máximas de stack trace (Mobile: 50, TV: 5) |
-| `appLogger.lowStorageMode` | Boolean | `false` | Reduce buffer local y stack traces (para TV o dispositivos low-RAM) |
-| `appLogger.verboseTransport` | Boolean | `false` | Log detallado de cada batch enviado (solo debug) |
-| `appLogger.userId` | String | `null` | UUID anónimo del usuario (solo con consentimiento explícito) |
-| `appLogger.bufferSizeStrategy` | String | `FIXED` | Estrategia de tamaño: `FIXED`, `ADAPTIVE_TO_RAM`, `ADAPTIVE_TO_LOG_RATE` |
-| `appLogger.bufferOverflowPolicy` | String | `DISCARD_OLDEST` | Política ante overflow: `DISCARD_OLDEST`, `DISCARD_NEWEST`, `PRIORITY_AWARE` |
-| `appLogger.offlinePersistenceMode` | String | `NONE` | Persistencia offline: `NONE`, `CRITICAL_ONLY`, `ALL` |
+| `appLogger_url` | String | `""` | Endpoint del backend (Supabase URL o URL propia) |
+| `appLogger_anonKey` | String | `""` | API key de autenticación (anon key de Supabase) |
+| `appLogger_debug` | Boolean | `false` | Modo debug: logs van a Logcat en vez de backend |
+| `appLogger_logToConsole` | Boolean | `true` | Mostrar logs en Logcat (solo en debug) |
+| `appLogger_batchSize` | Int | `20` | Número de eventos por batch antes de enviar (1-100) |
+| `appLogger_flushIntervalSeconds` | Int | `30` | Intervalo máximo en segundos antes de flush automático (5-300) |
+| `appLogger_maxStackTraceLines` | Int | `50` | Líneas máximas de stack trace (Mobile: 50, TV: 5) |
+| `appLogger_lowStorageMode` | Boolean | `false` | Reduce buffer local y stack traces (para TV o dispositivos low-RAM) |
+| `appLogger_verboseTransport` | Boolean | `false` | Log detallado de cada batch enviado (solo debug) |
+| `appLogger_userId` | String | `null` | UUID anónimo del usuario (solo con consentimiento explícito) |
+| `appLogger_bufferSizeStrategy` | String | `FIXED` | Estrategia de tamaño: `FIXED`, `ADAPTIVE_TO_RAM`, `ADAPTIVE_TO_LOG_RATE` |
+| `appLogger_bufferOverflowPolicy` | String | `DISCARD_OLDEST` | Política ante overflow: `DISCARD_OLDEST`, `DISCARD_NEWEST`, `PRIORITY_AWARE` |
+| `appLogger_offlinePersistenceMode` | String | `NONE` | Persistencia offline: `NONE`, `CRITICAL_ONLY`, `ALL` |
 
 ### 3.2 Ejemplo completo de `local.properties`
 
 ```properties
 # AppLogger — NUNCA commitear este archivo
-appLogger.url=https://tu-proyecto.supabase.co
-appLogger.anonKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.tu_anon_key_aqui
-appLogger.debug=true
-appLogger.logToConsole=true
-appLogger.batchSize=20
-appLogger.flushIntervalSeconds=30
-appLogger.maxStackTraceLines=50
-appLogger.lowStorageMode=false
-appLogger.verboseTransport=false
+appLogger_url=https://tu-proyecto.supabase.co
+appLogger_anonKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.tu_anon_key_aqui
+appLogger_debug=true
+appLogger_logToConsole=true
+appLogger_batchSize=20
+appLogger_flushIntervalSeconds=30
+appLogger_maxStackTraceLines=50
+appLogger_lowStorageMode=false
+appLogger_verboseTransport=false
 ```
 
 > **Verificar que `local.properties` está en `.gitignore`:**
@@ -155,18 +155,18 @@ android {
             if (file.exists()) load(file.inputStream())
         }
 
-        buildConfigField("String",  "LOGGER_URL",            "\"${props["appLogger.url"] ?: ""}\"")
-        buildConfigField("String",  "LOGGER_KEY",            "\"${props["appLogger.anonKey"] ?: ""}\"")
-        buildConfigField("Boolean", "LOGGER_DEBUG_MODE",     "${props["appLogger.debug"] ?: false}")
-        buildConfigField("Boolean", "LOGGER_CONSOLE_OUTPUT", "${props["appLogger.logToConsole"] ?: true}")
-        buildConfigField("Int",     "LOGGER_BATCH_SIZE",     "${props["appLogger.batchSize"] ?: 20}")
-        buildConfigField("Int",     "LOGGER_FLUSH_INTERVAL", "${props["appLogger.flushIntervalSeconds"] ?: 30}")
-        buildConfigField("Int",     "LOGGER_MAX_STACK",      "${props["appLogger.maxStackTraceLines"] ?: 50}")
-        buildConfigField("Boolean", "LOGGER_LOW_STORAGE",    "${props["appLogger.lowStorageMode"] ?: false}")
-        buildConfigField("Boolean", "LOGGER_VERBOSE",        "${props["appLogger.verboseTransport"] ?: false}")
-        buildConfigField("String",  "LOGGER_BUFFER_STRATEGY", "\"${props["appLogger.bufferSizeStrategy"] ?: "FIXED"}\"")
-        buildConfigField("String",  "LOGGER_OVERFLOW_POLICY", "\"${props["appLogger.bufferOverflowPolicy"] ?: "DISCARD_OLDEST"}\"")
-        buildConfigField("String",  "LOGGER_PERSISTENCE_MODE", "\"${props["appLogger.offlinePersistenceMode"] ?: "NONE"}\"")
+        buildConfigField("String",  "LOGGER_URL",            "\"${props["appLogger_url"] ?: ""}\"")
+        buildConfigField("String",  "LOGGER_KEY",            "\"${props["appLogger_anonKey"] ?: ""}\"")
+        buildConfigField("Boolean", "LOGGER_DEBUG_MODE",     "${props["appLogger_debug"] ?: false}")
+        buildConfigField("Boolean", "LOGGER_CONSOLE_OUTPUT", "${props["appLogger_logToConsole"] ?: true}")
+        buildConfigField("Int",     "LOGGER_BATCH_SIZE",     "${props["appLogger_batchSize"] ?: 20}")
+        buildConfigField("Int",     "LOGGER_FLUSH_INTERVAL", "${props["appLogger_flushIntervalSeconds"] ?: 30}")
+        buildConfigField("Int",     "LOGGER_MAX_STACK",      "${props["appLogger_maxStackTraceLines"] ?: 50}")
+        buildConfigField("Boolean", "LOGGER_LOW_STORAGE",    "${props["appLogger_lowStorageMode"] ?: false}")
+        buildConfigField("Boolean", "LOGGER_VERBOSE",        "${props["appLogger_verboseTransport"] ?: false}")
+        buildConfigField("String",  "LOGGER_BUFFER_STRATEGY", "\"${props["appLogger_bufferSizeStrategy"] ?: "FIXED"}\"")
+        buildConfigField("String",  "LOGGER_OVERFLOW_POLICY", "\"${props["appLogger_bufferOverflowPolicy"] ?: "DISCARD_OLDEST"}\"")
+        buildConfigField("String",  "LOGGER_PERSISTENCE_MODE", "\"${props["appLogger_offlinePersistenceMode"] ?: "NONE"}\"")
     }
 }
 ```
@@ -182,23 +182,23 @@ Para el pipeline de producción, las credenciales se inyectan como secrets:
     LOGGER_URL: ${{ secrets.LOGGER_URL }}
     LOGGER_KEY: ${{ secrets.LOGGER_ANON_KEY }}
   run: |
-    echo "appLogger.url=$LOGGER_URL" >> local.properties
-    echo "appLogger.anonKey=$LOGGER_KEY" >> local.properties
-    echo "appLogger.debug=false" >> local.properties
-    echo "appLogger.logToConsole=false" >> local.properties
+    echo "appLogger_url=$LOGGER_URL" >> local.properties
+    echo "appLogger_anonKey=$LOGGER_KEY" >> local.properties
+    echo "appLogger_debug=false" >> local.properties
+    echo "appLogger_logToConsole=false" >> local.properties
     ./gradlew assembleRelease
 ```
 
 ### 3.5 Comportamiento según configuración
 
-| `appLogger.debug` | `appLogger.logToConsole` | Resultado |
+| `appLogger_debug` | `appLogger_logToConsole` | Resultado |
 |---|---|---|
 | `true` | `true` | Logs a Logcat + backend (doble envío) |
 | `true` | `false` | Solo a Logcat (desarrollo sin red) |
 | `false` | `true` | Solo a backend (producción con verbose) |
 | `false` | `false` | Solo a backend (producción normal) |
 
-Para desactivar completamente el envío de datos (modo offline-only), no configurar `appLogger.url` o dejarlo vacío. El SDK operará solo con SQLite local.
+Para desactivar completamente el envío de datos (modo offline-only), no configurar `appLogger_url` o dejarlo vacío. El SDK operará solo con SQLite local.
 
 ---
 
@@ -638,7 +638,7 @@ Para requisitos más estrictos (ej. banca), se recomienda:
 
 ```kotlin
 // El valor de LOGGER_DEBUG_MODE viene de local.properties → build.gradle
-// En desarrollo: appLogger.debug=true → consola
+// En desarrollo: appLogger_debug=true → consola
 // En release: la variable no existe o es false → remoto
 
 AppLoggerConfig.Builder()

@@ -167,8 +167,8 @@ func TestTelemetryQueryContractJSON(t *testing.T) {
 		"--output", "json",
 	)
 	cmd.Env = append(cmd.Env,
-		"APPLOGGER_SUPABASE_URL="+mockSupabase.URL,
-		"APPLOGGER_SUPABASE_KEY=test-key",
+		"appLogger_supabaseUrl="+mockSupabase.URL,
+		"appLogger_supabaseKey=test-key",
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -227,8 +227,8 @@ func TestTelemetryAgentResponseTOON(t *testing.T) {
 		"--preview-limit", "1",
 	)
 	cmd.Env = append(cmd.Env,
-		"APPLOGGER_SUPABASE_URL="+mockSupabase.URL,
-		"APPLOGGER_SUPABASE_KEY=test-key",
+		"appLogger_supabaseUrl="+mockSupabase.URL,
+		"appLogger_supabaseKey=test-key",
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -290,8 +290,8 @@ func TestTelemetryQueryMetricsNameFilterJSON(t *testing.T) {
 		"--output", "json",
 	)
 	cmd.Env = append(cmd.Env,
-		"APPLOGGER_SUPABASE_URL="+mockSupabase.URL,
-		"APPLOGGER_SUPABASE_KEY=test-key",
+		"appLogger_supabaseUrl="+mockSupabase.URL,
+		"appLogger_supabaseKey=test-key",
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -343,8 +343,8 @@ func TestTelemetryQueryLogsAnomalyTypeFilterAndExtraJSON(t *testing.T) {
 		"--output", "json",
 	)
 	cmd.Env = append(cmd.Env,
-		"APPLOGGER_SUPABASE_URL="+mockSupabase.URL,
-		"APPLOGGER_SUPABASE_KEY=test-key",
+		"appLogger_supabaseUrl="+mockSupabase.URL,
+		"appLogger_supabaseKey=test-key",
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {

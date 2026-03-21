@@ -235,21 +235,21 @@ sdk.dir=C:\\Users\\TU_USUARIO\\AppData\\Local\\Android\\Sdk
 
 # ── Supabase (backend de logs) ──────────────────────────────────────────
 # Obtener de: https://supabase.com/dashboard → Settings → API
-appLogger.url=https://TU-PROYECTO.supabase.co
-appLogger.anonKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+appLogger_url=https://TU-PROYECTO.supabase.co
+appLogger_anonKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # ── Modo Debug ──────────────────────────────────────────────────────────
 # true  → logs en Logcat + envío al backend (desarrollo)
 # false → solo envío al backend, sin output local (producción)
-appLogger.debug=true
+appLogger_debug=true
 ```
 
 | Variable | Obligatoria | Dónde obtenerla |
 |---|:---:|---|
 | `sdk.dir` | ✅ | Android Studio lo autocompleta, o ver `ANDROID_HOME` |
-| `appLogger.url` | ✅ | [Supabase Dashboard](https://supabase.com/dashboard) → Settings → API → Project URL |
-| `appLogger.anonKey` | ✅ | Supabase Dashboard → Settings → API → `anon` `public` key |
-| `appLogger.debug` | ❌ | `true` para desarrollo, `false` para producción (default: `false`) |
+| `appLogger_url` | ✅ | [Supabase Dashboard](https://supabase.com/dashboard) → Settings → API → Project URL |
+| `appLogger_anonKey` | ✅ | Supabase Dashboard → Settings → API → `anon` `public` key |
+| `appLogger_debug` | ❌ | `true` para desarrollo, `false` para producción (default: `false`) |
 
 > ⚠️ **`local.properties` está en `.gitignore`** — nunca se sube al repositorio.  
 > Si clonás el repo y no existe, copiá desde `local.properties.example`.
@@ -277,9 +277,9 @@ android {
             val file = rootProject.file("local.properties")
             if (file.exists()) load(file.inputStream())
         }
-        buildConfigField("String",  "LOGGER_URL",  "\"${props["appLogger.url"] ?: ""}\"")
-        buildConfigField("String",  "LOGGER_KEY",  "\"${props["appLogger.anonKey"] ?: ""}\"")
-        buildConfigField("Boolean", "LOGGER_DEBUG", "${props["appLogger.debug"] ?: false}")
+        buildConfigField("String",  "LOGGER_URL",  "\"${props["appLogger_url"] ?: ""}\"")
+        buildConfigField("String",  "LOGGER_KEY",  "\"${props["appLogger_anonKey"] ?: ""}\"")
+        buildConfigField("Boolean", "LOGGER_DEBUG", "${props["appLogger_debug"] ?: false}")
     }
 }
 ```
@@ -465,7 +465,7 @@ Para que el pipeline funcione al 100%, configurá estos secrets en **GitHub → 
 
 | Secret | Requerido por | Dónde obtenerlo |
 |---|---|---|
-| `APPLOGGER_SUPABASE_URL` | Job `e2e` | Supabase Dashboard → Settings → API → Project URL |
+| `appLogger_supabaseUrl` | Job `e2e` | Supabase Dashboard → Settings → API → Project URL |
 | `APPLOGGER_SUPABASE_ANON_KEY` | Job `e2e` | Supabase Dashboard → Settings → API → `anon` `public` key |
 | `APPLOGGER_SUPABASE_SERVICE_KEY` | Job `e2e` | Supabase Dashboard → Settings → API → `service_role` key |
 | `CODECOV_TOKEN` | Job `test` (opcional) | [codecov.io](https://codecov.io) → Settings → Token |

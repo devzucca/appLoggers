@@ -19,19 +19,19 @@ type supabaseConfig struct {
 
 func loadSupabaseConfig() (supabaseConfig, error) {
 	cfg := supabaseConfig{
-		URL:            firstNonEmptyEnv("APPLOGGER_SUPABASE_URL", "SUPABASE_URL"),
-		APIKey:         firstNonEmptyEnv("APPLOGGER_SUPABASE_KEY", "SUPABASE_KEY"),
-		Schema:         firstNonEmptyEnv("APPLOGGER_SUPABASE_SCHEMA"),
-		LogsTable:      firstNonEmptyEnv("APPLOGGER_SUPABASE_LOG_TABLE"),
-		MetricsTable:   firstNonEmptyEnv("APPLOGGER_SUPABASE_METRIC_TABLE"),
+		URL:            firstNonEmptyEnv("appLogger_supabaseUrl", "APPLOGGER_SUPABASE_URL", "SUPABASE_URL"),
+		APIKey:         firstNonEmptyEnv("appLogger_supabaseKey", "APPLOGGER_SUPABASE_KEY", "SUPABASE_KEY"),
+		Schema:         firstNonEmptyEnv("appLogger_supabaseSchema", "APPLOGGER_SUPABASE_SCHEMA"),
+		LogsTable:      firstNonEmptyEnv("appLogger_supabaseLogTable", "APPLOGGER_SUPABASE_LOG_TABLE"),
+		MetricsTable:   firstNonEmptyEnv("appLogger_supabaseMetricTable", "APPLOGGER_SUPABASE_METRIC_TABLE"),
 		TimeoutSeconds: 15,
 	}
 
 	if cfg.URL == "" {
-		return cfg, fmt.Errorf("missing Supabase URL: set APPLOGGER_SUPABASE_URL or SUPABASE_URL")
+		return cfg, fmt.Errorf("missing Supabase URL: set appLogger_supabaseUrl or SUPABASE_URL")
 	}
 	if cfg.APIKey == "" {
-		return cfg, fmt.Errorf("missing Supabase API key: set APPLOGGER_SUPABASE_KEY or SUPABASE_KEY (service_role key required for CLI reads)")
+		return cfg, fmt.Errorf("missing Supabase API key: set appLogger_supabaseKey or SUPABASE_KEY (service_role key required for CLI reads)")
 	}
 	if cfg.Schema == "" {
 		cfg.Schema = "public"
@@ -42,10 +42,10 @@ func loadSupabaseConfig() (supabaseConfig, error) {
 	if cfg.MetricsTable == "" {
 		cfg.MetricsTable = "app_metrics"
 	}
-	if timeoutRaw := firstNonEmptyEnv("APPLOGGER_SUPABASE_TIMEOUT_SECONDS"); timeoutRaw != "" {
+	if timeoutRaw := firstNonEmptyEnv("appLogger_supabaseTimeoutSeconds", "APPLOGGER_SUPABASE_TIMEOUT_SECONDS"); timeoutRaw != "" {
 		timeoutSeconds, err := strconv.Atoi(timeoutRaw)
 		if err != nil || timeoutSeconds < 1 || timeoutSeconds > 120 {
-			return cfg, fmt.Errorf("invalid APPLOGGER_SUPABASE_TIMEOUT_SECONDS value %q (expected 1..120)", timeoutRaw)
+			return cfg, fmt.Errorf("invalid appLogger_supabaseTimeoutSeconds value %q (expected 1..120)", timeoutRaw)
 		}
 		cfg.TimeoutSeconds = timeoutSeconds
 	}

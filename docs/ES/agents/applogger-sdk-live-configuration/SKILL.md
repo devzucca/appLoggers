@@ -27,16 +27,16 @@ Examples:
 
 ## Required SDK config keys
 
-1. `appLogger.url`
-2. `appLogger.anonKey`
-3. `appLogger.debug`
+1. `appLogger_url`
+2. `appLogger_anonKey`
+3. `appLogger_debug`
 
 ## Debug output behavior
 
 1. Logcat output on Android appears only when `isDebugMode=true` and `consoleOutput=true`.
-2. In standard setups, `appLogger.debug` maps to both `debugMode` and `consoleOutput`, so `appLogger.debug=true` enables Logcat output.
+2. In standard setups, `appLogger_debug` maps to both `debugMode` and `consoleOutput`, so `appLogger_debug=true` enables Logcat output.
 3. No additional Logcat configuration, logging wrapper, or Android logger setup is required.
-4. Never set `appLogger.debug=true` in production builds.
+4. Never set `appLogger_debug=true` in production builds.
 
 Source of truth in AppLoggers SDK:
 

@@ -64,16 +64,16 @@ Bootstrap rules:
 Before `telemetry query`, ensure environment is configured:
 
 1. Required:
-   - `APPLOGGER_SUPABASE_URL`
-   - `APPLOGGER_SUPABASE_KEY` (service_role key)
+   - `appLogger_supabaseUrl`
+   - `appLogger_supabaseKey` (service_role key)
 2. Optional:
-   - `APPLOGGER_SUPABASE_SCHEMA`
-   - `APPLOGGER_SUPABASE_LOG_TABLE`
-   - `APPLOGGER_SUPABASE_METRIC_TABLE`
-   - `APPLOGGER_SUPABASE_TIMEOUT_SECONDS`
+   - `appLogger_supabaseSchema`
+   - `appLogger_supabaseLogTable`
+   - `appLogger_supabaseMetricTable`
+   - `appLogger_supabaseTimeoutSeconds`
 3. If operating with Supabase MCP available, retrieve:
    - project URL from `mcp_supabase_get_project_url`
-4. Provision `APPLOGGER_SUPABASE_KEY` from secure secret storage (service_role).
+4. Provision `appLogger_supabaseKey` from secure secret storage (service_role).
    - Do not use publishable/anon keys for CLI read operations.
 
 Telemetry notes:

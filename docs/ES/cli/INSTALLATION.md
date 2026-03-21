@@ -309,8 +309,8 @@ El CLI necesita acceso a tu proyecto Supabase para consultar logs y métricas.
 # 2. Selecciona tu proyecto
 # 3. Settings → API → copia los valores
 
-$env:APPLOGGER_SUPABASE_URL = "https://TU_PROJECT_REF.supabase.co"
-$env:APPLOGGER_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+$env:appLogger_supabaseUrl = "https://TU_PROJECT_REF.supabase.co"
+$env:appLogger_supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
 # Verifica que funcionó
 applogger-cli health --output json
@@ -319,8 +319,8 @@ applogger-cli health --output json
 #### CMD (Windows)
 
 ```cmd
-set APPLOGGER_SUPABASE_URL=https://TU_PROJECT_REF.supabase.co
-set APPLOGGER_SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+set appLogger_supabaseUrl=https://TU_PROJECT_REF.supabase.co
+set appLogger_supabaseKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 REM Verifica
 applogger-cli health --output json
@@ -329,8 +329,8 @@ applogger-cli health --output json
 #### Bash / Zsh (macOS, Linux)
 
 ```bash
-export APPLOGGER_SUPABASE_URL="https://TU_PROJECT_REF.supabase.co"
-export APPLOGGER_SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+export appLogger_supabaseUrl="https://TU_PROJECT_REF.supabase.co"
+export appLogger_supabaseKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
 # Verifica
 applogger-cli health --output json
@@ -341,8 +341,8 @@ applogger-cli health --output json
 **Bash/Zsh:**
 ```bash
 # Agregar a ~/.bashrc o ~/.zshrc
-echo 'export APPLOGGER_SUPABASE_URL="https://TU_PROJECT_REF.supabase.co"' >> ~/.bashrc
-echo 'export APPLOGGER_SUPABASE_KEY="..."' >> ~/.bashrc
+echo 'export appLogger_supabaseUrl="https://TU_PROJECT_REF.supabase.co"' >> ~/.bashrc
+echo 'export appLogger_supabaseKey="..."' >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -351,8 +351,8 @@ source ~/.bashrc
 # Agregar a tu perfil PowerShell
 $profile  # te muestra la ruta
 Add-Content -Path $profile -Value @"
-`$env:APPLOGGER_SUPABASE_URL = "https://TU_PROJECT_REF.supabase.co"
-`$env:APPLOGGER_SUPABASE_KEY = "..."
+`$env:appLogger_supabaseUrl = "https://TU_PROJECT_REF.supabase.co"
+`$env:appLogger_supabaseKey = "..."
 "@
 ```
 
@@ -360,12 +360,12 @@ Add-Content -Path $profile -Value @"
 
 | Variable | Default | Propósito |
 |---|---|---|
-| `APPLOGGER_SUPABASE_URL` | — | URL de tu proyecto Supabase |
-| `APPLOGGER_SUPABASE_KEY` | — | Llave `service_role` para consultas del CLI |
-| `APPLOGGER_SUPABASE_SCHEMA` | `public` | Esquema en PostgreSQL |
-| `APPLOGGER_SUPABASE_LOG_TABLE` | `app_logs` | Tabla de logs |
-| `APPLOGGER_SUPABASE_METRIC_TABLE` | `app_metrics` | Tabla de métricas |
-| `APPLOGGER_SUPABASE_TIMEOUT_SECONDS` | `15` | Timeout HTTP (1-120) |
+| `appLogger_supabaseUrl` | — | URL de tu proyecto Supabase |
+| `appLogger_supabaseKey` | — | Llave `service_role` para consultas del CLI |
+| `appLogger_supabaseSchema` | `public` | Esquema en PostgreSQL |
+| `appLogger_supabaseLogTable` | `app_logs` | Tabla de logs |
+| `appLogger_supabaseMetricTable` | `app_metrics` | Tabla de métricas |
+| `appLogger_supabaseTimeoutSeconds` | `15` | Timeout HTTP (1-120) |
 
 > Seguridad: usa `service_role` solo en backend/entornos de operaciones.
 > El SDK movil debe usar anon key y nunca exponer `service_role`.
@@ -429,18 +429,18 @@ chmod +x /usr/local/bin/applogger-cli
 chmod +x /usr/local/bin/applogger-cli
 ```
 
-### "health check failed: APPLOGGER_SUPABASE_URL not set"
+### "health check failed: appLogger_supabaseUrl not set"
 
 **Causa**: Las variables de entorno no están configuradas.
 
 ```bash
 # Verifica si están cargadas
-echo $APPLOGGER_SUPABASE_URL
-echo $APPLOGGER_SUPABASE_KEY
+echo $appLogger_supabaseUrl
+echo $appLogger_supabaseKey
 
 # Si están vacías, configúralas
-export APPLOGGER_SUPABASE_URL="..."
-export APPLOGGER_SUPABASE_KEY="..."
+export appLogger_supabaseUrl="..."
+export appLogger_supabaseKey="..."
 ```
 
 ### "GOARCH and OS env vars not allowed"
@@ -461,7 +461,7 @@ go build -o applogger-cli ./cmd/applogger-cli
 1. Ve a [Supabase Dashboard](https://supabase.com/dashboard)
 2. Settings → API
 3. Copia la llave `service_role` nuevamente
-4. Reconfigura: `export APPLOGGER_SUPABASE_KEY="..."`
+4. Reconfigura: `export appLogger_supabaseKey="..."`
 
 ---
 

@@ -44,13 +44,13 @@ dependencies:
 config:
   environment_variables:
     required:
-      - APPLOGGER_SUPABASE_URL
-      - APPLOGGER_SUPABASE_KEY
+      - appLogger_supabaseUrl
+      - appLogger_supabaseKey
     optional:
-      - APPLOGGER_SUPABASE_SCHEMA
-      - APPLOGGER_SUPABASE_LOG_TABLE
-      - APPLOGGER_SUPABASE_METRIC_TABLE
-      - APPLOGGER_SUPABASE_TIMEOUT_SECONDS
+      - appLogger_supabaseSchema
+      - appLogger_supabaseLogTable
+      - appLogger_supabaseMetricTable
+      - appLogger_supabaseTimeoutSeconds
   flags:
     global:
       - name: "--output"

@@ -13,8 +13,8 @@
 
 ```bash
 # Usar variables de entorno (nunca hardcodear)
-export APPLOGGER_SUPABASE_URL="https://project.supabase.co"
-export APPLOGGER_SUPABASE_KEY="$(aws secretsmanager get-secret-value --secret-id applogger-key | jq -r .SecretString)"
+export appLogger_supabaseUrl="https://project.supabase.co"
+export appLogger_supabaseKey="$(aws secretsmanager get-secret-value --secret-id applogger-key | jq -r .SecretString)"
 
 applogger-cli health --output json
 ```
@@ -29,12 +29,12 @@ kubectl create secret generic applogger-credentials \
 ```yaml
 # Pod config
 env:
-  - name: APPLOGGER_SUPABASE_URL
+  - name: appLogger_supabaseUrl
     valueFrom:
       secretKeyRef:
         name: applogger-credentials
         key: supabase-url
-  - name: APPLOGGER_SUPABASE_KEY
+  - name: appLogger_supabaseKey
     valueFrom:
       secretKeyRef:
         name: applogger-credentials
@@ -54,7 +54,7 @@ echo "key=eyJhbGc..." > /etc/applogger.conf   # ❌ ¡DANGEROUS!
 ps aux | grep applogger-cli                  # ❌ Secrets expuestos
 
 # ❌ Loguear credenciales
-echo "Using key: $APPLOGGER_SUPABASE_KEY"    # ❌ Logs sensibles
+echo "Using key: $appLogger_supabaseKey"    # ❌ Logs sensibles
 ```
 
 ### 2. Manejo de Errores
@@ -251,7 +251,7 @@ log_query "logs"
 applogger-cli telemetry query >> /tmp/log.txt  # Formato inconsistente
 
 # ❌ Loguear datos sensibles
-echo "Query ran with credentials: $APPLOGGER_SUPABASE_KEY" >> log.txt  # ❌ SECRETOS
+echo "Query ran with credentials: $appLogger_supabaseKey" >> log.txt  # ❌ SECRETOS
 
 # ❌ Sin trazabilidad
 applogger-cli health && echo "Health check OK"  # No se sabe quién, cuándo, por qué
@@ -403,12 +403,12 @@ spec:
                 --output json > /tmp/audit.json
               echo "Audit complete"
             env:
-            - name: APPLOGGER_SUPABASE_URL
+            - name: appLogger_supabaseUrl
               valueFrom:
                 secretKeyRef:
                   name: applogger-secrets
                   key: url
-            - name: APPLOGGER_SUPABASE_KEY
+            - name: appLogger_supabaseKey
               valueFrom:
                 secretKeyRef:
                   name: applogger-secrets
@@ -429,8 +429,8 @@ RUN go build -o /usr/local/bin/applogger-cli ./cmd/applogger-cli
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /usr/local/bin/applogger-cli /usr/local/bin/
-ENV APPLOGGER_SUPABASE_URL=""
-ENV APPLOGGER_SUPABASE_KEY=""
+ENV appLogger_supabaseUrl=""
+ENV appLogger_supabaseKey=""
 ENTRYPOINT ["applogger-cli"]
 CMD ["--help"]
 ```
@@ -448,8 +448,8 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     env:
-      APPLOGGER_SUPABASE_URL: ${{ secrets.APPLOGGER_SUPABASE_URL }}
-      APPLOGGER_SUPABASE_KEY: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
+      appLogger_supabaseUrl: ${{ secrets.APPLOGGER_SUPABASE_URL }}
+      appLogger_supabaseKey: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
     steps:
       - name: Download CLI
         run: |

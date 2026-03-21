@@ -131,8 +131,8 @@ if ! command -v applogger-cli &> /dev/null; then
 fi
 
 # 2. Verify credentials are set
-if [ -z "$APPLOGGER_SUPABASE_URL" ] || [ -z "$APPLOGGER_SUPABASE_KEY" ]; then
-  echo "FATAL: APPLOGGER_SUPABASE_URL or APPLOGGER_SUPABASE_KEY not set"
+if [ -z "$appLogger_supabaseUrl" ] || [ -z "$appLogger_supabaseKey" ]; then
+  echo "FATAL: appLogger_supabaseUrl or appLogger_supabaseKey not set"
   exit 1
 fi
 
@@ -667,8 +667,8 @@ jobs:
 
       - name: Query errors (last 24h)
         env:
-          APPLOGGER_SUPABASE_URL: ${{ secrets.APPLOGGER_SUPABASE_URL }}
-          APPLOGGER_SUPABASE_KEY: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
+          appLogger_supabaseUrl: ${{ secrets.APPLOGGER_SUPABASE_URL }}
+          appLogger_supabaseKey: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
         run: |
           /tmp/applogger-cli telemetry query \
             --source logs \
@@ -718,11 +718,11 @@ curl -fsSL https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/instal
 
 ```bash
 # Verify credentials
-echo "URL: $APPLOGGER_SUPABASE_URL"
-echo "Key: ${APPLOGGER_SUPABASE_KEY:0:10}..."
+echo "URL: $appLogger_supabaseUrl"
+echo "Key: ${appLogger_supabaseKey:0:10}..."
 
 # Test connectivity
-curl -s "$APPLOGGER_SUPABASE_URL/rest/v1/?apikey=$APPLOGGER_SUPABASE_KEY" | jq .
+curl -s "$appLogger_supabaseUrl/rest/v1/?apikey=$appLogger_supabaseKey" | jq .
 
 # Check Supabase dashboard
 # https://supabase.com/dashboard → Status

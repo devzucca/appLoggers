@@ -35,6 +35,8 @@ jobs:
             go: 1.24.x
     env:
       GOFLAGS: -mod=readonly
+      appLogger_supabaseUrl: ${{ secrets.APPLOGGER_SUPABASE_URL }}
+      appLogger_supabaseKey: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
       APPLOGGER_SUPABASE_URL: ${{ secrets.APPLOGGER_SUPABASE_URL }}
       APPLOGGER_SUPABASE_KEY: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
 

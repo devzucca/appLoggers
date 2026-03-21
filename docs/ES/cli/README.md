@@ -530,26 +530,26 @@ Ver [AGENT_OPERATOR_SKILL.md](../agents/applogger-cli-agent-operator/SKILL.md) p
 
 | Variable | Propósito | Ejemplo |
 |---|---|---|
-| `APPLOGGER_SUPABASE_URL` | URL del proyecto | `https://project.supabase.co` |
-| `APPLOGGER_SUPABASE_KEY` | API key service_role (solo backend/operaciones) | `eyJhbGc...` |
+| `appLogger_supabaseUrl` | URL del proyecto | `https://project.supabase.co` |
+| `appLogger_supabaseKey` | API key service_role (solo backend/operaciones) | `eyJhbGc...` |
 
 ### Opcionales
 
 | Variable | Default | Propósito |
 |---|---|---|
-| `APPLOGGER_SUPABASE_SCHEMA` | `public` | Esquema PostgreSQL |
-| `APPLOGGER_SUPABASE_LOG_TABLE` | `app_logs` | Nombre tabla logs |
-| `APPLOGGER_SUPABASE_METRIC_TABLE` | `app_metrics` | Nombre tabla métricas |
-| `APPLOGGER_SUPABASE_TIMEOUT_SECONDS` | `15` | Timeout HTTP (1-120) |
+| `appLogger_supabaseSchema` | `public` | Esquema PostgreSQL |
+| `appLogger_supabaseLogTable` | `app_logs` | Nombre tabla logs |
+| `appLogger_supabaseMetricTable` | `app_metrics` | Nombre tabla métricas |
+| `appLogger_supabaseTimeoutSeconds` | `15` | Timeout HTTP (1-120) |
 
 ### Backwards Compatibility
 
 Fallback aliases para compatibilidad:
-- `SUPABASE_URL` → `APPLOGGER_SUPABASE_URL`
-- `SUPABASE_KEY` → `APPLOGGER_SUPABASE_KEY`
+- `SUPABASE_URL` → `appLogger_supabaseUrl`
+- `SUPABASE_KEY` → `appLogger_supabaseKey`
 
 > Importante: el CLI requiere `service_role` para consultas `SELECT` con RLS activa.
-> No uses anon/publishable key en `APPLOGGER_SUPABASE_KEY`.
+> No uses anon/publishable key en `appLogger_supabaseKey`.
 
 ---
 

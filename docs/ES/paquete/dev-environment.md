@@ -181,7 +181,7 @@ Editar con los valores reales:
 sdk.dir=C\:\\Users\\<tuUsuario>\\AppData\\Local\\Android\\Sdk
 
 # ─── Supabase ────────────────────────────────────────────────
-APPLOGGER_SUPABASE_URL=https://hqvkrsmlphjnkefpfpzg.supabase.co
+appLogger_supabaseUrl=https://hqvkrsmlphjnkefpfpzg.supabase.co
 APPLOGGER_SUPABASE_ANON_KEY=<tu-anon-key>
 APPLOGGER_SUPABASE_SERVICE_KEY=<tu-service-key>
 
@@ -384,7 +384,7 @@ Verificar que `JAVA_HOME` apunta a JDK 17 (no 21, no 25). El CI usa estrictament
 
 ### Supabase e2e tests fallan localmente
 
-Los tests en `SupabaseE2ETest.kt` requieren credenciales reales en `local.properties`. Asegurarse de que `APPLOGGER_SUPABASE_URL`, `APPLOGGER_SUPABASE_ANON_KEY`, y `APPLOGGER_SUPABASE_SERVICE_KEY` estén configurados. Los tests e2e solo corren en CI cuando se hace push a `main`.
+Los tests en `SupabaseE2ETest.kt` requieren credenciales reales en `local.properties`. Asegurarse de que `appLogger_supabaseUrl`, `APPLOGGER_SUPABASE_ANON_KEY`, y `APPLOGGER_SUPABASE_SERVICE_KEY` estén configurados. Los tests e2e solo corren en CI cuando se hace push a `main`.
 
 ---
 

@@ -3,16 +3,16 @@
 ## Windows (PowerShell)
 
 ```powershell
-$env:APPLOGGER_SUPABASE_URL = "https://YOUR_PROJECT.supabase.co"
-$env:APPLOGGER_SUPABASE_KEY = "YOUR_SERVICE_ROLE_KEY"
+$env:appLogger_supabaseUrl = "https://YOUR_PROJECT.supabase.co"
+$env:appLogger_supabaseKey = "YOUR_SERVICE_ROLE_KEY"
 applogger-cli health --output json
 ```
 
 ## Linux/macOS (bash)
 
 ```bash
-export APPLOGGER_SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
-export APPLOGGER_SUPABASE_KEY="YOUR_SERVICE_ROLE_KEY"
+export appLogger_supabaseUrl="https://YOUR_PROJECT.supabase.co"
+export appLogger_supabaseKey="YOUR_SERVICE_ROLE_KEY"
 applogger-cli health --output json
 ```
 

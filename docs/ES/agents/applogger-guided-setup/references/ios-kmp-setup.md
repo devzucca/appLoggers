@@ -65,9 +65,9 @@ If `local.properties` is present:
 Suggested keys:
 
 ```properties
-appLogger.url=https://YOUR-PROJECT.supabase.co
-appLogger.anonKey=YOUR_ANON_KEY
-appLogger.debug=false
+appLogger_url=https://YOUR-PROJECT.supabase.co
+appLogger_anonKey=YOUR_ANON_KEY
+appLogger_debug=false
 ```
 
 ## Minimal verification

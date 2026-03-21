@@ -18,11 +18,13 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
  * Test E2E real contra Supabase.
  *
  * Solo se ejecuta si las variables de entorno están configuradas:
+ *   appLogger_supabaseUrl=https://tu-proyecto.supabase.co
  *   APPLOGGER_SUPABASE_URL=https://tu-proyecto.supabase.co
  *   APPLOGGER_SUPABASE_ANON_KEY=eyJhbGc...
  *   APPLOGGER_SUPABASE_SERVICE_KEY=eyJhbGc... (para lectura/verificación)
  *
  * Para ejecutar:
+ *   $env:appLogger_supabaseUrl = "https://xxx.supabase.co"
  *   $env:APPLOGGER_SUPABASE_URL = "https://xxx.supabase.co"
  *   $env:APPLOGGER_SUPABASE_ANON_KEY = "eyJ..."
  *   $env:APPLOGGER_SUPABASE_SERVICE_KEY = "eyJ..."
@@ -34,7 +36,8 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 class SupabaseE2ETest {
 
     companion object {
-        private val url = System.getenv("APPLOGGER_SUPABASE_URL") ?: ""
+        private val url = System.getenv("appLogger_supabaseUrl")?.takeIf { it.isNotBlank() }
+            ?: (System.getenv("APPLOGGER_SUPABASE_URL") ?: "")
         private val anonKey = System.getenv("APPLOGGER_SUPABASE_ANON_KEY") ?: ""
         private val serviceKey = System.getenv("APPLOGGER_SUPABASE_SERVICE_KEY") ?: ""
 
