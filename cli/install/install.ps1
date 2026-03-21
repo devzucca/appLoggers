@@ -1,10 +1,13 @@
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
-
 param(
     [string]$Version = $env:APPLOGGER_CLI_VERSION,
-    [string]$InstallDir = $env:APPLOGGER_CLI_INSTALL_DIR
+    [string]$InstallDir = $env:APPLOGGER_CLI_INSTALL_DIR,
+    [int]$DownloadRetries = 5,
+    [int]$RetryDelaySeconds = 2,
+    [int]$DownloadTimeoutSeconds = 120
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 $Repo = 'devzucca/appLoggers'
 
@@ -17,15 +20,52 @@ function Resolve-Version {
     param([string]$RequestedVersion)
 
     if ($RequestedVersion) {
+        if ($RequestedVersion -notlike 'applogger-cli-v*') {
+            throw 'APPLOGGER_CLI_VERSION must match applogger-cli-v*.'
+        }
         return $RequestedVersion
     }
 
-    $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases?per_page=100"
+    $releases = Invoke-WithRetry -Action {
+        Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases?per_page=100" -TimeoutSec $DownloadTimeoutSeconds
+    }
     $release = $releases | Where-Object { $_.tag_name -like 'applogger-cli-v*' } | Select-Object -First 1
     if (-not $release) {
         throw 'Unable to resolve latest applogger-cli release tag.'
     }
     return $release.tag_name
+}
+
+function Invoke-WithRetry {
+    param(
+        [scriptblock]$Action
+    )
+
+    $attempt = 1
+    while ($attempt -le $DownloadRetries) {
+        try {
+            return & $Action
+        }
+        catch {
+            if ($attempt -ge $DownloadRetries) {
+                throw
+            }
+            Write-Log "Attempt $attempt failed; retrying in $RetryDelaySeconds second(s)..."
+            Start-Sleep -Seconds $RetryDelaySeconds
+            $attempt++
+        }
+    }
+}
+
+function Download-File {
+    param(
+        [string]$Uri,
+        [string]$OutFile
+    )
+
+    Invoke-WithRetry -Action {
+        Invoke-WebRequest -Uri $Uri -OutFile $OutFile -TimeoutSec $DownloadTimeoutSeconds
+    }
 }
 
 function Ensure-PathContains {
@@ -48,6 +88,8 @@ if (-not $InstallDir) {
     $InstallDir = Join-Path $env:LOCALAPPDATA 'Programs\AppLoggerCLI'
 }
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 $tag = Resolve-Version -RequestedVersion $Version
 $assetName = 'applogger-cli-windows-amd64.exe'
 $checksumName = "$assetName.sha256"
@@ -63,8 +105,8 @@ try {
     $finalPath = Join-Path $InstallDir 'applogger-cli.exe'
 
     Write-Log "Installing $assetName from $tag"
-    Invoke-WebRequest -Uri "$releaseBase/$assetName" -OutFile $downloadPath
-    Invoke-WebRequest -Uri "$releaseBase/$checksumName" -OutFile $checksumPath
+    Download-File -Uri "$releaseBase/$assetName" -OutFile $downloadPath
+    Download-File -Uri "$releaseBase/$checksumName" -OutFile $checksumPath
 
     $expectedHash = (Get-Content -Path $checksumPath -Raw).Split([char[]]@(' ', "`t", "`r", "`n"), [System.StringSplitOptions]::RemoveEmptyEntries)[0].ToLowerInvariant()
     $actualHash = (Get-FileHash -Path $downloadPath -Algorithm SHA256).Hash.ToLowerInvariant()

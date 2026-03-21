@@ -39,8 +39,27 @@ Este flujo:
 - resuelve la última release `applogger-cli-v*`
 - detecta plataforma y arquitectura
 - descarga el binario correcto
-- valida checksum SHA-256
+- valida checksum SHA-256 de forma obligatoria
 - deja el binario listo para usar
+- aplica política de red con reintentos y timeouts para descargas
+
+Notas de hardening del instalador:
+
+- Linux/macOS: requiere `sha256sum` o `shasum`; si no existe verificador, la instalación falla.
+- Windows: usa TLS 1.2 y reintentos de descarga con timeout configurable.
+
+Parámetros de red (opcionales):
+
+- Bash installer:
+  - `APPLOGGER_CLI_CURL_RETRY_MAX` (default `5`)
+  - `APPLOGGER_CLI_CURL_RETRY_DELAY` (default `2`)
+  - `APPLOGGER_CLI_CURL_CONNECT_TIMEOUT` (default `10`)
+  - `APPLOGGER_CLI_CURL_MAX_TIME` (default `120`)
+  - `APPLOGGER_CLI_CURL_RETRY_MAX_TIME` (default `300`)
+- PowerShell installer:
+  - `-DownloadRetries` (default `5`)
+  - `-RetryDelaySeconds` (default `2`)
+  - `-DownloadTimeoutSeconds` (default `120`)
 
 Para fijar una versión específica:
 

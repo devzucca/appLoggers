@@ -25,6 +25,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 ### Security
 - Release governance now blocks `main` and tag deliveries when embedded CLI build metadata remains at `dev`, `none`, or `unknown`.
 - Package-manager publication remains gated behind explicit repository variables and secrets, reducing accidental distribution drift.
+- CLI installers now enforce checksum verification as a hard requirement (no silent fallback when hash tooling is missing).
+
+### Fixed
+- Installer network hardening: Linux/macOS and Windows installers now apply retry and timeout policies for release and checksum downloads.
+- Installer version input hardening: explicit version pin is now validated to `applogger-cli-v*` format before download.
 
 ### Planned
 - `logger-transport-firebase` module — transport to Firebase Realtime Database

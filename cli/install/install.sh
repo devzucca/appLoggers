@@ -5,6 +5,11 @@ set -euo pipefail
 REPO="devzucca/appLoggers"
 INSTALL_DIR="${APPLOGGER_CLI_INSTALL_DIR:-}"
 REQUESTED_VERSION="${APPLOGGER_CLI_VERSION:-}"
+CURL_RETRY_MAX="${APPLOGGER_CLI_CURL_RETRY_MAX:-5}"
+CURL_RETRY_DELAY="${APPLOGGER_CLI_CURL_RETRY_DELAY:-2}"
+CURL_CONNECT_TIMEOUT="${APPLOGGER_CLI_CURL_CONNECT_TIMEOUT:-10}"
+CURL_MAX_TIME="${APPLOGGER_CLI_CURL_MAX_TIME:-120}"
+CURL_RETRY_MAX_TIME="${APPLOGGER_CLI_CURL_RETRY_MAX_TIME:-300}"
 
 log() {
   printf '[applogger-cli] %s\n' "$*"
@@ -37,17 +42,53 @@ detect_arch() {
 
 resolve_version() {
   if [ -n "$REQUESTED_VERSION" ]; then
+    case "$REQUESTED_VERSION" in
+      applogger-cli-v*) ;;
+      *) fail "APPLOGGER_CLI_VERSION must match applogger-cli-v*" ;;
+    esac
     printf '%s' "$REQUESTED_VERSION"
     return
   fi
 
   local api_url="https://api.github.com/repos/${REPO}/releases?per_page=100"
   local releases
-  releases="$(curl -fsSL "$api_url")"
+  releases="$(download_text "$api_url")"
   local tag
   tag="$(printf '%s' "$releases" | grep -o '"tag_name": *"applogger-cli-v[^"]*"' | head -n 1 | sed 's/.*"\(applogger-cli-v[^"]*\)"/\1/')"
   [ -n "$tag" ] || fail "unable to resolve latest applogger-cli release tag"
   printf '%s' "$tag"
+}
+
+download_text() {
+  local url="$1"
+  curl \
+    --fail \
+    --silent \
+    --show-error \
+    --location \
+    --retry "$CURL_RETRY_MAX" \
+    --retry-delay "$CURL_RETRY_DELAY" \
+    --retry-max-time "$CURL_RETRY_MAX_TIME" \
+    --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+    --max-time "$CURL_MAX_TIME" \
+    "$url"
+}
+
+download_file() {
+  local url="$1"
+  local out_path="$2"
+  curl \
+    --fail \
+    --silent \
+    --show-error \
+    --location \
+    --retry "$CURL_RETRY_MAX" \
+    --retry-delay "$CURL_RETRY_DELAY" \
+    --retry-max-time "$CURL_RETRY_MAX_TIME" \
+    --connect-timeout "$CURL_CONNECT_TIMEOUT" \
+    --max-time "$CURL_MAX_TIME" \
+    "$url" \
+    -o "$out_path"
 }
 
 resolve_install_dir() {
@@ -79,7 +120,7 @@ verify_checksum() {
     return
   fi
 
-  log "sha256 verifier not available; skipping checksum verification"
+  fail "sha256 verifier not available (requires sha256sum or shasum)"
 }
 
 main() {
@@ -104,8 +145,8 @@ main() {
   mkdir -p "$install_dir"
 
   log "installing ${asset_name} from ${version}"
-  curl -fsSL "${release_base}/${asset_name}" -o "$tmp_asset"
-  curl -fsSL "${release_base}/${checksum_name}" -o "$tmp_checksum"
+  download_file "${release_base}/${asset_name}" "$tmp_asset"
+  download_file "${release_base}/${checksum_name}" "$tmp_checksum"
   verify_checksum "$tmp_asset" "$tmp_checksum"
 
   chmod +x "$tmp_asset"
