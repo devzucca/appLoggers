@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 MD040 MD051 MD060 MD029 -->
+
 # AppLoggers
 
 Monorepo de telemetría técnica — **SDK** · Frontend · CLI.
@@ -84,9 +86,9 @@ appLoggers/
 Single source of truth por superficie:
 
 - SDK: `sdk/gradle.properties` -> `VERSION_NAME`
-    - Se usa para publicar artefactos y para generar `AppLoggerVersion` automaticamente.
+  - Se usa para publicar artefactos y para generar `AppLoggerVersion` automaticamente.
 - CLI: `cli/VERSION`
-    - El workflow de CLI lo usa para construir versiones en ramas y valida que el tag release `applogger-cli-v*` coincida con ese valor.
+  - El workflow de CLI lo usa para construir versiones en ramas y valida que el tag release `applogger-cli-v*` coincida con ese valor.
 
 Regla de release:
 
@@ -432,7 +434,7 @@ AppLoggerIos.shared.metric("buffer_time", 420.0, "ms")
 | 4 | `docs/ES/migraciones/004_rls_policies.sql` | Políticas de seguridad (RLS) |
 | 5 | `docs/ES/migraciones/005_retention_policy.sql` | Retención automática de datos |
 
-3. Copiá la **URL del proyecto** y la **anon key** a tu `local.properties`
+1. Copiá la **URL del proyecto** y la **anon key** a tu `local.properties`
 
 ---
 
