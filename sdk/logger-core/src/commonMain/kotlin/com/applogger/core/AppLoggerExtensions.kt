@@ -10,9 +10,9 @@ package com.applogger.core
  * ```kotlin
  * class PlayerController(private val logger: AppLogger) {
  *     fun start() {
- *         logger.logI("Playback started")
- *         logger.logW("Buffer low", anomalyType = "BUFFER_LOW")
- *         logger.logE("Playback failed", throwable)
+ *         logger.logI("PLAYER", "Playback started")
+ *         logger.logW("PLAYER", "Buffer low", anomalyType = "BUFFER_LOW")
+ *         logger.logE("PLAYER", "Playback failed", throwable = e)
  *     }
  * }
  * ```
@@ -22,6 +22,7 @@ package com.applogger.core
  * class AuthRepository(private val logger: AppLogger) {
  *     fun login() {
  *         this.logD(logger, "Login attempt")
+ *         this.logE(logger, "Login failed", throwable = e)
  *     }
  * }
  * ```

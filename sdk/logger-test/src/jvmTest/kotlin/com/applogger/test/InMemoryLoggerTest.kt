@@ -117,4 +117,34 @@ class InMemoryLoggerTest {
         assertEquals(1, snapshot.size) // Snapshot doesn't grow
         assertEquals(2, logger.logs.size) // But actual logs does
     }
+
+    // ── Throwable capture on non-critical levels ───────────────────────────────
+
+    @Test
+    fun `debug throwable is captured in LogEntry`() {
+        val exception = IllegalStateException("debug error")
+        logger.debug("TAG", "debug msg", throwable = exception)
+        assertEquals(exception, logger.logs.first().throwable)
+    }
+
+    @Test
+    fun `info throwable is captured in LogEntry`() {
+        val exception = RuntimeException("info error")
+        logger.info("TAG", "info msg", throwable = exception)
+        assertEquals(exception, logger.logs.first().throwable)
+    }
+
+    @Test
+    fun `warn throwable is captured in LogEntry`() {
+        val exception = Exception("warn error")
+        logger.warn("TAG", "warn msg", throwable = exception, anomalyType = "SLOW")
+        assertEquals(exception, logger.logs.first().throwable)
+        assertEquals(1, logger.warnCount)
+    }
+
+    @Test
+    fun `null throwable is absent in LogEntry`() {
+        logger.info("TAG", "no throwable")
+        assertNull(logger.logs.first().throwable)
+    }
 }
