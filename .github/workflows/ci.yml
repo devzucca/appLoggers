@@ -27,6 +27,9 @@ jobs:
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Run Detekt
         run: ./gradlew detekt
 
@@ -55,6 +58,9 @@ jobs:
 
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
 
       - name: Run Unit Tests
         run: ./gradlew :logger-core:jvmTest :logger-test:jvmTest :sample:testDebugUnitTest
@@ -104,6 +110,9 @@ jobs:
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Run E2E Tests against Supabase
         env:
           APPLOGGER_SUPABASE_URL: ${{ secrets.APPLOGGER_SUPABASE_URL }}
@@ -144,6 +153,9 @@ jobs:
 
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
 
       - name: Build for CodeQL
         run: ./gradlew :logger-core:compileKotlinJvm :logger-transport-supabase:compileKotlinJvm
