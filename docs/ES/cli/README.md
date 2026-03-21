@@ -172,6 +172,7 @@ applogger-cli telemetry query \
   [--aggregate MODE] \
   [--severity LEVEL] \          # logs only
   [--tag NAME] \                # logs only
+  [--anomaly-type TYPE] \       # logs only (extra.anomaly_type)
   [--session-id UUID] \
   [--name METRIC_NAME] \        # metrics only
   [--limit N] \
@@ -186,11 +187,12 @@ applogger-cli telemetry query \
 | `--from` | ❌ | RFC3339 | `--from 2026-03-01T00:00:00Z` |
 | `--to` | ❌ | RFC3339 | `--to 2026-03-02T00:00:00Z` |
 | `--aggregate` | ❌ | `none`, `hour`, `severity`, `tag`, `session`, `name` | `--aggregate severity` |
-| `--severity` | ❌ (logs) | `debug`, `info`, `warn`, `error` | `--severity error` |
+| `--severity` | ❌ (logs) | `debug`, `info`, `warn`, `error`, `critical`, `metric` | `--severity error` |
 | `--tag` | ❌ (logs) | texto libre | `--tag PAYMENT` |
+| `--anomaly-type` | ❌ (logs) | texto libre | `--anomaly-type slow_response` |
 | `--session-id` | ❌ | UUID | `--session-id 550e8400-e29b-41d4-a716-446655440000` |
 | `--name` | ❌ (metrics) | texto libre | `--name response_time_ms` |
-| `--limit` | ❌ | 1-1000 (default: 25) | `--limit 50` |
+| `--limit` | ❌ | 1-1000 (default: 100) | `--limit 50` |
 | `--output` | ❌ | `text`, `json`, `agent` | `--output json` |
 
 #### Ejemplos
@@ -233,6 +235,21 @@ applogger-cli telemetry query \
   --to 2026-03-19T23:59:59Z
 ```
 
+**E. Warnings por tipo de anomalia**
+```bash
+applogger-cli telemetry query \
+  --source logs \
+  --severity warn \
+  --anomaly-type slow_response \
+  --limit 25 \
+  --output json
+```
+
+Notas operativas:
+
+- Las consultas de `logs` devuelven el campo `extra` cuando existe.
+- `anomaly_type` no es una columna top-level; vive dentro de `extra.anomaly_type`.
+
 ---
 
 ### `applogger-cli telemetry agent-response`
@@ -249,6 +266,7 @@ applogger-cli telemetry agent-response \
   [--to TIMESTAMP] \
   [--severity LEVEL] \
   [--tag NAME] \
+  [--anomaly-type TYPE] \
   [--session-id UUID] \
   [--name METRIC_NAME] \
   [--limit N] \
@@ -259,7 +277,7 @@ applogger-cli telemetry agent-response \
 
 | Parámetro | Default | Valores | Propósito |
 |---|---|---|---|
-| `--preview-limit` | 1 | 0-50 | Filas de muestra en `rows_preview` |
+| `--preview-limit` | 5 | 0-50 | Filas de muestra en `rows_preview` |
 
 #### Salida (TOON Format)
 
@@ -312,17 +330,16 @@ Por defecto, amigable para lectura.
 ```bash
 $ applogger-cli telemetry query --source logs --severity error --limit 2
 
-Total logs: 2145
-Filter: severity=error
-Showing 2 of 2145 results
-
-[1] ERROR (2026-03-19T10:30:00Z) — PAYMENT
-    Message: Transaction declined
-    Session: 550e8400-e29b-41d4-a716-446655440000
-
-[2] ERROR (2026-03-19T10:29:15Z) — AUTH
-    Message: Invalid credentials
-    Session: 550e8400-e29b-41d4-a716-446655440001
+source=logs
+count=2
+aggregate=none
+from=
+to=
+severity=error
+session_id=
+tag=
+name=
+limit=2
 ```
 
 ### 2. **json** (Parser/Script)
@@ -338,6 +355,7 @@ JSON valido compatible con cualquier lenguaje.
     "source": "logs",
     "aggregate": "none",
     "severity": "error",
+    "anomaly_type": "",
     "limit": 2
   },
   "rows": [

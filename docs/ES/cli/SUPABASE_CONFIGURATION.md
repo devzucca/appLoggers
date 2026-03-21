@@ -121,8 +121,10 @@ Ejemplo GitHub Actions:
 ```yaml
 env:
   APPLOGGER_SUPABASE_URL: ${{ secrets.APPLOGGER_SUPABASE_URL }}
-  APPLOGGER_SUPABASE_KEY: ${{ secrets.APPLOGGER_SUPABASE_SERVICE_ROLE_KEY }}
+  APPLOGGER_SUPABASE_KEY: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
 ```
+
+Para `act` en local, definir el mismo par en `.act.secrets`. Si el workflow referencia un secret ausente, `act` lo inyecta vacio.
 
 ## Paso 4 - Verificacion operativa del CLI
 

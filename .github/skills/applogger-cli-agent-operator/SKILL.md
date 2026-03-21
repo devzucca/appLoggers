@@ -35,6 +35,8 @@ Use this skill when a Copilot agent or automation needs to interact with AppLogg
    - `applogger-cli telemetry query --output agent`
 7. Dedicated compact orchestration response:
    - `applogger-cli telemetry agent-response --source logs --aggregate severity --preview-limit 5`
+8. Warning anomaly inspection:
+   - `applogger-cli telemetry query --source logs --severity warn --anomaly-type slow_response --output json`
 
 ## Supabase Environment Setup
 
@@ -53,6 +55,11 @@ Before `telemetry query`, ensure environment is configured:
 4. Provision `APPLOGGER_SUPABASE_KEY` from secure secret storage (service_role).
    - Do not use publishable/anon keys for CLI read operations.
 
+Telemetry notes:
+
+1. Log rows may include `extra` with `extra.anomaly_type`.
+2. Use `--anomaly-type` only with `--source=logs`.
+
 ## Error Handling Contract
 
 1. If exit code is 2, the caller should correct arguments and retry.
@@ -63,5 +70,6 @@ Before `telemetry query`, ensure environment is configured:
 
 1. Report executed commands.
 2. Report parsed JSON fields used for decisions.
-3. Report retries and final status.
-4. Report remaining uncertainty if command is preview status.
+3. If querying logs, state whether `extra` or `extra.anomaly_type` influenced the decision.
+4. Report retries and final status.
+5. Report remaining uncertainty if command is preview status.

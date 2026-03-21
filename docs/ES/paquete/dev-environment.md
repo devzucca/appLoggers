@@ -311,7 +311,9 @@ act push -W .github/workflows/ci.yml --job test
 |---|---|---|
 | Composite actions en v4 | Puede fallar con `unsupported object type` al resolver tags | Usar `./gradlew` directamente (Sección 6) |
 | Android SDK | La imagen `act-latest` no incluye Android SDK | Solo correr jobs que no requieran compilación Android |
+| Permisos de `gradlew` en Windows | `act` puede perder el execute bit al copiar desde NTFS al contenedor Linux | Mantener `chmod +x ./gradlew` en los workflows |
 | CodeQL | Requiere autenticación GitHub y no funciona en local | Solo corre en CI remoto |
+| Upload de artifacts | `actions/upload-artifact` puede fallar sin `ACTIONS_RUNTIME_TOKEN` | Validar compilación y tests localmente; dejar upload para CI remoto |
 | Secretos | `.act.secrets` requiere valores reales para tests e2e | Usar mocks para desarrollo local |
 
 > **Recomendación:** Para el desarrollo diario, usar las verificaciones manuales de la Sección 6. Reservar `act` para verificar cambios en los propios archivos `.github/workflows/`.

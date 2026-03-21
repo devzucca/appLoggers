@@ -367,6 +367,14 @@ applogger-cli telemetry query \
   --limit 25 \
   --output json
 
+# Filter warning anomalies stored in extra.anomaly_type
+applogger-cli telemetry query \
+  --source logs \
+  --severity warn \
+  --anomaly-type slow_response \
+  --limit 25 \
+  --output json
+
 # Piping for further processing
 applogger-cli telemetry query \
   --source metrics \
@@ -638,8 +646,8 @@ jobs:
           /tmp/applogger-cli telemetry query \
             --source logs \
             --severity error \
-            --create-report audit-$(date +%Y%m%d).json \
-            --output json
+            --output json \
+            > audit-$(date +%Y%m%d).json
 
       - name: Upload report
         uses: actions/upload-artifact@v4

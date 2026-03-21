@@ -107,16 +107,23 @@ applogger-cli telemetry agent-response \
 # Health check for agents
 applogger-cli health --output json
 
-# Placeholder telemetry command
+# Minimal telemetry query
 applogger-cli telemetry query
 
-# Telemetry contract with filters (backend next phase)
+# Telemetry contract with filters
 applogger-cli telemetry query \
   --source logs \
   --from 2026-03-01T00:00:00Z \
   --to 2026-03-02T00:00:00Z \
   --severity error \
   --aggregate hour \
+  --limit 25 \
+  --output json
+
+# Query warning anomalies stored under extra.anomaly_type
+applogger-cli telemetry query \
+  --source logs \
+  --anomaly-type slow_response \
   --limit 25 \
   --output json
 
@@ -138,6 +145,12 @@ applogger-cli telemetry query \
 - `tag`: logs only, group by `tag`
 - `name`: metrics only, group by metric `name`
 
+### Log Payload Notes
+
+- Log queries include the `extra` object when present.
+- `warn(..., anomalyType = "...")` is exposed through `extra.anomaly_type`.
+- Use `--anomaly-type` to filter warning anomalies on the server side.
+
 ## Development
 
 ```bash
@@ -147,8 +160,7 @@ go test ./...
 
 ## Next Milestones
 
-- Phase 2: telemetry query engine and filters
-- Phase 3: Supabase integration and aggregations
+- Phase 3: richer telemetry presets and saved reports
 - Phase 4: installers and release automation
 
 ## Plugin Metadata
