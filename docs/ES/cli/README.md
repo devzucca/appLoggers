@@ -24,6 +24,7 @@
 
 - [Instalación Rápida](#instalación-rápida)
 - [Configuración Supabase Detallada](#configuración-supabase-detallada)
+- [Selección de Proyecto](#selección-de-proyecto)
 - [Comandos Principales](#comandos-principales)
 - [Consultas de Telemetría](#consultas-de-telemetría)
 - [Salidas (text/json/agent)](#salidas-texjsonarent)
@@ -51,15 +52,53 @@ usuario operativo del CLI, hardening y troubleshooting), ver:
 
 - [SUPABASE_CONFIGURATION.md](./SUPABASE_CONFIGURATION.md)
 
+## Selección de Proyecto
+
+El CLI ya soporta operación multi-proyecto para escenarios donde una misma
+estación o futura app en Wails debe consultar telemetría de varias apps
+distintas (`klinema`, `klinematv`, etc.).
+
+Precedencia de resolución:
+
+1. `--project`
+2. `APPLOGGER_PROJECT`
+3. Detección por `workspace_roots` desde `APPLOGGER_CONFIG`
+4. `default_project`
+5. Único proyecto configurado
+6. Variables legacy `appLogger_supabase*`, `APPLOGGER_SUPABASE_*`, `SUPABASE_*`
+
+Variables nuevas:
+
+- `APPLOGGER_CONFIG`: ruta al archivo JSON de proyectos
+- `APPLOGGER_PROJECT`: nombre del proyecto activo
+
+Ejemplo rápido:
+
+```bash
+applogger-cli --project klinema telemetry query --source logs --severity error --output json
+```
+
 ```bash
 # Linux / macOS
-curl -L https://github.com/devzucca/appLoggers/releases/download/applogger-cli-v0.1.0/applogger-cli-linux-amd64 \
-  -o /usr/local/bin/applogger-cli
-chmod +x /usr/local/bin/applogger-cli
+curl -fsSL https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.sh | bash
 
 # Verificar
-applogger-cli --version
+applogger-cli version --output json
 ```
+
+```powershell
+# Windows PowerShell
+irm https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.ps1 | iex
+
+# Verificar
+applogger-cli version --output json
+```
+
+Notas:
+
+- En macOS se usa el mismo instalador `bash`; detecta Intel vs Apple Silicon.
+- En Linux detecta `amd64` vs `arm64`.
+- En Windows instala en el perfil del usuario y actualiza `PATH`.
 
 ---
 
@@ -172,6 +211,7 @@ applogger-cli telemetry query \
   [--aggregate MODE] \
   [--severity LEVEL] \          # logs only
   [--tag NAME] \                # logs only
+  [--anomaly-type TYPE] \       # logs only (extra.anomaly_type)
   [--session-id UUID] \
   [--name METRIC_NAME] \        # metrics only
   [--limit N] \
@@ -186,11 +226,12 @@ applogger-cli telemetry query \
 | `--from` | ❌ | RFC3339 | `--from 2026-03-01T00:00:00Z` |
 | `--to` | ❌ | RFC3339 | `--to 2026-03-02T00:00:00Z` |
 | `--aggregate` | ❌ | `none`, `hour`, `severity`, `tag`, `session`, `name` | `--aggregate severity` |
-| `--severity` | ❌ (logs) | `debug`, `info`, `warn`, `error` | `--severity error` |
+| `--severity` | ❌ (logs) | `debug`, `info`, `warn`, `error`, `critical`, `metric` | `--severity error` |
 | `--tag` | ❌ (logs) | texto libre | `--tag PAYMENT` |
+| `--anomaly-type` | ❌ (logs) | texto libre | `--anomaly-type slow_response` |
 | `--session-id` | ❌ | UUID | `--session-id 550e8400-e29b-41d4-a716-446655440000` |
 | `--name` | ❌ (metrics) | texto libre | `--name response_time_ms` |
-| `--limit` | ❌ | 1-1000 (default: 25) | `--limit 50` |
+| `--limit` | ❌ | 1-1000 (default: 100) | `--limit 50` |
 | `--output` | ❌ | `text`, `json`, `agent` | `--output json` |
 
 #### Ejemplos
@@ -233,6 +274,21 @@ applogger-cli telemetry query \
   --to 2026-03-19T23:59:59Z
 ```
 
+**E. Warnings por tipo de anomalia**
+```bash
+applogger-cli telemetry query \
+  --source logs \
+  --severity warn \
+  --anomaly-type slow_response \
+  --limit 25 \
+  --output json
+```
+
+Notas operativas:
+
+- Las consultas de `logs` devuelven el campo `extra` cuando existe.
+- `anomaly_type` no es una columna top-level; vive dentro de `extra.anomaly_type`.
+
 ---
 
 ### `applogger-cli telemetry agent-response`
@@ -249,6 +305,7 @@ applogger-cli telemetry agent-response \
   [--to TIMESTAMP] \
   [--severity LEVEL] \
   [--tag NAME] \
+  [--anomaly-type TYPE] \
   [--session-id UUID] \
   [--name METRIC_NAME] \
   [--limit N] \
@@ -259,7 +316,7 @@ applogger-cli telemetry agent-response \
 
 | Parámetro | Default | Valores | Propósito |
 |---|---|---|---|
-| `--preview-limit` | 1 | 0-50 | Filas de muestra en `rows_preview` |
+| `--preview-limit` | 5 | 0-50 | Filas de muestra en `rows_preview` |
 
 #### Salida (TOON Format)
 
@@ -312,17 +369,16 @@ Por defecto, amigable para lectura.
 ```bash
 $ applogger-cli telemetry query --source logs --severity error --limit 2
 
-Total logs: 2145
-Filter: severity=error
-Showing 2 of 2145 results
-
-[1] ERROR (2026-03-19T10:30:00Z) — PAYMENT
-    Message: Transaction declined
-    Session: 550e8400-e29b-41d4-a716-446655440000
-
-[2] ERROR (2026-03-19T10:29:15Z) — AUTH
-    Message: Invalid credentials
-    Session: 550e8400-e29b-41d4-a716-446655440001
+source=logs
+count=2
+aggregate=none
+from=
+to=
+severity=error
+session_id=
+tag=
+name=
+limit=2
 ```
 
 ### 2. **json** (Parser/Script)
@@ -338,6 +394,7 @@ JSON valido compatible con cualquier lenguaje.
     "source": "logs",
     "aggregate": "none",
     "severity": "error",
+    "anomaly_type": "",
     "limit": 2
   },
   "rows": [
@@ -500,26 +557,29 @@ Ver [AGENT_OPERATOR_SKILL.md](../agents/applogger-cli-agent-operator/SKILL.md) p
 
 | Variable | Propósito | Ejemplo |
 |---|---|---|
-| `APPLOGGER_SUPABASE_URL` | URL del proyecto | `https://project.supabase.co` |
-| `APPLOGGER_SUPABASE_KEY` | API key service_role (solo backend/operaciones) | `eyJhbGc...` |
+| `appLogger_supabaseUrl` | URL del proyecto | `https://project.supabase.co` |
+| `appLogger_supabaseKey` | API key service_role (solo backend/operaciones) | `eyJhbGc...` |
 
 ### Opcionales
 
 | Variable | Default | Propósito |
 |---|---|---|
-| `APPLOGGER_SUPABASE_SCHEMA` | `public` | Esquema PostgreSQL |
-| `APPLOGGER_SUPABASE_LOG_TABLE` | `app_logs` | Nombre tabla logs |
-| `APPLOGGER_SUPABASE_METRIC_TABLE` | `app_metrics` | Nombre tabla métricas |
-| `APPLOGGER_SUPABASE_TIMEOUT_SECONDS` | `15` | Timeout HTTP (1-120) |
+| `appLogger_supabaseSchema` | `public` | Esquema PostgreSQL |
+| `appLogger_supabaseLogTable` | `app_logs` | Nombre tabla logs |
+| `appLogger_supabaseMetricTable` | `app_metrics` | Nombre tabla métricas |
+| `appLogger_supabaseTimeoutSeconds` | `15` | Timeout HTTP (1-120) |
 
 ### Backwards Compatibility
 
 Fallback aliases para compatibilidad:
-- `SUPABASE_URL` → `APPLOGGER_SUPABASE_URL`
-- `SUPABASE_KEY` → `APPLOGGER_SUPABASE_KEY`
+
+- `APPLOGGER_SUPABASE_URL` → `appLogger_supabaseUrl`
+- `APPLOGGER_SUPABASE_KEY` → `appLogger_supabaseKey`
+- `SUPABASE_URL` → `appLogger_supabaseUrl`
+- `SUPABASE_KEY` → `appLogger_supabaseKey`
 
 > Importante: el CLI requiere `service_role` para consultas `SELECT` con RLS activa.
-> No uses anon/publishable key en `APPLOGGER_SUPABASE_KEY`.
+> No uses anon/publishable key en `appLogger_supabaseKey`.
 
 ---
 

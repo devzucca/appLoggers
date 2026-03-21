@@ -8,10 +8,12 @@ import (
 )
 
 type healthPayload struct {
-	OK        bool   `json:"ok"`
-	Status    string `json:"status"`
-	Version   string `json:"version"`
-	Timestamp string `json:"timestamp"`
+	OK           bool   `json:"ok"`
+	Status       string `json:"status"`
+	Version      string `json:"version"`
+	Project      string `json:"project,omitempty"`
+	ConfigSource string `json:"config_source,omitempty"`
+	Timestamp    string `json:"timestamp"`
 }
 
 func newHealthCommand() *cobra.Command {
@@ -31,6 +33,10 @@ func newHealthCommand() *cobra.Command {
 				Status:    "ready",
 				Version:   buildVersion,
 				Timestamp: time.Now().UTC().Format(time.RFC3339),
+			}
+			if cfg, err := loadSupabaseConfig(); err == nil {
+				payload.Project = cfg.Project
+				payload.ConfigSource = cfg.ConfigSource
 			}
 			if outputFormat == "json" {
 				return writeJSON(cmd.OutOrStdout(), payload)

@@ -53,7 +53,7 @@ Implementar logging de forma ingenua puede convertir **la solución en el proble
 | Llamar al logger en el hilo principal | ANR (Application Not Responding) |
 | Sin control de volumen en WebSocket/gRPC | 10.000 eventos/minuto → colapso del backend |
 
-### 1.3 Objetivo del Paquete                                                                                                                                                                                                                                                                  
+### 1.3 Objetivo del Paquete
 
 Diseñar `AppLogger` como un paquete Kotlin de código abierto que:
 
@@ -509,14 +509,14 @@ enum class Platform(val isLowResource: Boolean) {
 
 ```properties
 # AppLogger — Configuración local de desarrollo (NO commitear)
-appLogger.url=https://tu-proyecto.supabase.co
-appLogger.anonKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-appLogger.debug=true
-appLogger.logToConsole=true
-appLogger.batchSize=20
-appLogger.flushIntervalSeconds=30
-appLogger.lowStorageMode=false
-appLogger.maxStackTraceLines=50
+appLogger_url=https://tu-proyecto.supabase.co
+appLogger_anonKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+appLogger_debug=true
+appLogger_logToConsole=true
+appLogger_batchSize=20
+appLogger_flushIntervalSeconds=30
+appLogger_lowStorageMode=false
+appLogger_maxStackTraceLines=50
 ```
 
 ### 10.2 build.gradle.kts — Mapeo a BuildConfig
@@ -527,11 +527,11 @@ android {
         val props = Properties().also {
             it.load(rootProject.file("local.properties").inputStream())
         }
-        buildConfigField("String",  "LOGGER_URL",   "\"${props["appLogger.url"] ?: ""}\"")
-        buildConfigField("String",  "LOGGER_KEY",   "\"${props["appLogger.anonKey"] ?: ""}\"")
-        buildConfigField("Boolean", "LOGGER_DEBUG", "${props["appLogger.debug"] ?: false}")
-        buildConfigField("Boolean", "LOG_CONSOLE",  "${props["appLogger.logToConsole"] ?: true}")
-        buildConfigField("Int",     "LOGGER_BATCH", "${props["appLogger.batchSize"] ?: 20}")
+        buildConfigField("String",  "LOGGER_URL",   "\"${props["appLogger_url"] ?: ""}\"")
+        buildConfigField("String",  "LOGGER_KEY",   "\"${props["appLogger_anonKey"] ?: ""}\"")
+        buildConfigField("Boolean", "LOGGER_DEBUG", "${props["appLogger_debug"] ?: false}")
+        buildConfigField("Boolean", "LOG_CONSOLE",  "${props["appLogger_logToConsole"] ?: true}")
+        buildConfigField("Int",     "LOGGER_BATCH", "${props["appLogger_batchSize"] ?: 20}")
     }
 }
 ```

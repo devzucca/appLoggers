@@ -28,6 +28,9 @@ Do not use this skill when:
 4. Keep iOS guidance KMP-only.
 5. If `local.properties` is used, verify required AppLogger keys first.
 6. Add only missing AppLogger keys and keep all existing unrelated variables untouched.
+7. Use canonical SDK packages only: `com.applogger.core.*` and `com.applogger.transport.supabase.SupabaseTransport`.
+8. Never generate `com.applogger.sdk.*` imports.
+9. Validate Logcat guidance with the exact condition: `isDebugMode && consoleOutput`.
 
 ## Workflow
 

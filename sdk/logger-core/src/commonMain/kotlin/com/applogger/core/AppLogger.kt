@@ -25,28 +25,37 @@ interface AppLogger {
      *
      * @param tag   Short identifier for the source (e.g. class or screen name).
      * @param message Human-readable description.
+     * @param throwable Optional exception whose stack trace will be captured.
      * @param extra Optional key-value metadata attached to the event.
      */
-    fun debug(tag: String, message: String, extra: Map<String, Any>? = null)
+    fun debug(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
 
     /**
      * Logs an informational message.
      *
      * @param tag   Short identifier for the source.
      * @param message Human-readable description.
+     * @param throwable Optional exception whose stack trace will be captured.
      * @param extra Optional key-value metadata.
      */
-    fun info(tag: String, message: String, extra: Map<String, Any>? = null)
+    fun info(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
 
     /**
      * Logs a warning. Use for recoverable anomalies.
      *
      * @param tag   Short identifier for the source.
      * @param message Human-readable description.
+     * @param throwable Optional exception whose stack trace will be captured.
      * @param anomalyType Optional classification of the anomaly (e.g. "slow_response").
      * @param extra Optional key-value metadata.
      */
-    fun warn(tag: String, message: String, anomalyType: String? = null, extra: Map<String, Any>? = null)
+    fun warn(
+        tag: String,
+        message: String,
+        throwable: Throwable? = null,
+        anomalyType: String? = null,
+        extra: Map<String, Any>? = null
+    )
 
     /**
      * Logs an error. Triggers immediate batch flush.

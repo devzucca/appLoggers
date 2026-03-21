@@ -12,7 +12,7 @@
 
 1. Android: `Application.onCreate()` or the main DI/bootstrap layer.
 2. KMP iOS: shared Kotlin bootstrap invoked from app startup code.
-3. Shared business logic: helper wrappers in `commonMain` for repeated usage.
+3. Shared business logic: use `AppLoggerExtensions` (`Any.logD/I/W/E/C`) in `commonMain` for repeated usage — tag is inferred automatically from the class name.
 
 ## First-pass integration policy
 
@@ -31,9 +31,44 @@
 
 Required keys:
 
-1. `appLogger.url`
-2. `appLogger.anonKey`
-3. `appLogger.debug`
+1. `appLogger_url`
+2. `appLogger_anonKey`
+3. `appLogger_debug`
+
+## Canonical imports and packages
+
+Use only these package roots in Android integration code:
+
+1. `com.applogger.core.AppLoggerSDK`
+2. `com.applogger.core.AppLoggerConfig`
+3. `com.applogger.core.AppLoggerHealth`
+4. `com.applogger.transport.supabase.SupabaseTransport`
+
+Do not use `com.applogger.sdk.*` imports.
+
+## Canonical initialization snippet (Android)
+
+```kotlin
+val transport = SupabaseTransport(
+ endpoint = BuildConfig.LOGGER_URL,
+ apiKey = BuildConfig.LOGGER_KEY
+)
+
+AppLoggerSDK.initialize(
+ context = this,
+ config = AppLoggerConfig.Builder()
+  .endpoint(BuildConfig.LOGGER_URL)
+  .apiKey(BuildConfig.LOGGER_KEY)
+  .debugMode(BuildConfig.LOGGER_DEBUG)
+  .consoleOutput(BuildConfig.LOGGER_DEBUG)
+  .batchSize(20)
+  .flushIntervalSeconds(30)
+  .build(),
+ transport = transport
+)
+```
+
+Logcat visibility rule: output is shown only when `isDebugMode=true` and `consoleOutput=true`.
 
 ## What not to do on first pass
 

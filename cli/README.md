@@ -35,49 +35,139 @@ go mod tidy
 go run ./cmd/applogger-cli --syncbin-metadata --output json
 ```
 
+## Standard Installation
+
+One-line installers for the latest published CLI release:
+
+```bash
+# Linux
+curl -fsSL https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.sh | bash
+
+# macOS
+curl -fsSL https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.sh | bash
+```
+
+```powershell
+# Windows PowerShell
+irm https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.ps1 | iex
+```
+
+Notes:
+
+- The bash installer auto-detects Linux vs macOS and `amd64` vs `arm64`.
+- The PowerShell installer installs `applogger-cli.exe` into the user profile and adds it to the user `PATH`.
+- Both installers resolve the latest `applogger-cli-v*` GitHub Release automatically.
+- To pin a specific release, set `APPLOGGER_CLI_VERSION`, for example `APPLOGGER_CLI_VERSION=applogger-cli-v0.1.0`.
+
 ## Supabase Configuration (Environment Variables)
 
 The CLI reads Supabase configuration from environment variables:
 
-- `APPLOGGER_SUPABASE_URL` (required)
-- `APPLOGGER_SUPABASE_KEY` (required, service_role key for CLI reads)
-- `APPLOGGER_SUPABASE_SCHEMA` (optional, default `public`)
-- `APPLOGGER_SUPABASE_LOG_TABLE` (optional, default `app_logs`)
-- `APPLOGGER_SUPABASE_METRIC_TABLE` (optional, default `app_metrics`)
-- `APPLOGGER_SUPABASE_TIMEOUT_SECONDS` (optional, default `15`)
+- `appLogger_supabaseUrl` (required)
+- `appLogger_supabaseKey` (required, service_role key for CLI reads)
+- `appLogger_supabaseSchema` (optional, default `public`)
+- `appLogger_supabaseLogTable` (optional, default `app_logs`)
+- `appLogger_supabaseMetricTable` (optional, default `app_metrics`)
+- `appLogger_supabaseTimeoutSeconds` (optional, default `15`)
 
 Fallback aliases are supported for compatibility:
 
+- `APPLOGGER_SUPABASE_URL`
+- `APPLOGGER_SUPABASE_KEY`
 - `SUPABASE_URL`
 - `SUPABASE_KEY`
+
+## Multi-Project Configuration
+
+For corporate setups with multiple telemetry apps, the CLI also supports a shared
+project config file. This is the recommended model when the CLI will later be
+hosted or orchestrated by a Wails desktop app and streamed over SSE.
+
+Selection precedence:
+
+1. `--project <name>`
+2. `APPLOGGER_PROJECT`
+3. Workspace autodetection via `workspace_roots`
+4. `default_project`
+5. Single configured project
+6. Legacy environment variables (`appLogger_supabase*`, `APPLOGGER_SUPABASE_*`, `SUPABASE_*`)
+
+Config file resolution:
+
+- `--config <path>`
+- `APPLOGGER_CONFIG`
+- Default path: `os.UserConfigDir()/applogger/cli.json`
+
+Recommended JSON structure:
+
+```json
+{
+  "default_project": "klinema",
+  "projects": [
+    {
+      "name": "klinema",
+      "display_name": "Klinema Mobile",
+      "workspace_roots": [
+        "D:/workspace/klinema"
+      ],
+      "supabase": {
+        "url": "https://klinema.supabase.co",
+        "api_key_env": "APPLOGGER_KLINEMA_SUPABASE_KEY",
+        "schema": "public",
+        "logs_table": "app_logs",
+        "metrics_table": "app_metrics",
+        "timeout_seconds": 15
+      }
+    },
+    {
+      "name": "klinematv",
+      "display_name": "Klinema TV",
+      "workspace_roots": [
+        "D:/workspace/klinematv"
+      ],
+      "supabase": {
+        "url": "https://klinematv.supabase.co",
+        "api_key_env": "APPLOGGER_KLINEMATV_SUPABASE_KEY"
+      }
+    }
+  ]
+}
+```
+
+Operational guidance:
+
+- Keep `service_role` secrets outside the JSON file whenever possible by using `api_key_env`.
+- Let Wails own the project registry and spawn the CLI with the same config model.
+- SSE should transport resolved project context (`project`, `config_source`) rather than raw secrets.
+- When only one project is configured, the CLI auto-selects it to keep local workflows simple.
 
 ### Export Variables (PowerShell)
 
 ```powershell
-$env:APPLOGGER_SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
-$env:APPLOGGER_SUPABASE_KEY="YOUR_SUPABASE_SERVICE_ROLE_KEY"
+$env:appLogger_supabaseUrl="https://YOUR_PROJECT_REF.supabase.co"
+$env:appLogger_supabaseKey="YOUR_SUPABASE_SERVICE_ROLE_KEY"
 ```
 
 ### Export Variables (CMD)
 
 ```cmd
-set APPLOGGER_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-set APPLOGGER_SUPABASE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+set appLogger_supabaseUrl=https://YOUR_PROJECT_REF.supabase.co
+set appLogger_supabaseKey=YOUR_SUPABASE_SERVICE_ROLE_KEY
 ```
 
 ### Export Variables (Bash/Zsh)
 
 ```bash
-export APPLOGGER_SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
-export APPLOGGER_SUPABASE_KEY="YOUR_SUPABASE_SERVICE_ROLE_KEY"
+export appLogger_supabaseUrl="https://YOUR_PROJECT_REF.supabase.co"
+export appLogger_supabaseKey="YOUR_SUPABASE_SERVICE_ROLE_KEY"
 ```
 
 ### If You Are Using Supabase MCP
 
 You can resolve values before export with:
 
-1. `mcp_supabase_get_project_url` for `APPLOGGER_SUPABASE_URL`
-2. `APPLOGGER_SUPABASE_KEY` must be provisioned from secure secrets storage (service_role)
+1. `mcp_supabase_get_project_url` for `appLogger_supabaseUrl`
+2. `appLogger_supabaseKey` must be provisioned from secure secrets storage (service_role)
 
 ## Examples
 
@@ -107,16 +197,29 @@ applogger-cli telemetry agent-response \
 # Health check for agents
 applogger-cli health --output json
 
-# Placeholder telemetry command
+# Explicit project selection
+applogger-cli --project klinema telemetry query --source logs --severity error --output json
+
+# Workspace-based autodetection via APPLOGGER_CONFIG
+APPLOGGER_CONFIG="$HOME/.config/applogger/cli.json" applogger-cli telemetry query --source logs --limit 25 --output json
+
+# Minimal telemetry query
 applogger-cli telemetry query
 
-# Telemetry contract with filters (backend next phase)
+# Telemetry contract with filters
 applogger-cli telemetry query \
   --source logs \
   --from 2026-03-01T00:00:00Z \
   --to 2026-03-02T00:00:00Z \
   --severity error \
   --aggregate hour \
+  --limit 25 \
+  --output json
+
+# Query warning anomalies stored under extra.anomaly_type
+applogger-cli telemetry query \
+  --source logs \
+  --anomaly-type slow_response \
   --limit 25 \
   --output json
 
@@ -138,6 +241,13 @@ applogger-cli telemetry query \
 - `tag`: logs only, group by `tag`
 - `name`: metrics only, group by metric `name`
 
+### Log Payload Notes
+
+- Log queries include the `extra` object when present.
+- `warn(..., anomalyType = "...")` is exposed through `extra.anomaly_type`.
+- Use `--anomaly-type` to filter warning anomalies on the server side.
+- Project-based responses include `project` and `config_source` when the CLI resolved a project profile.
+
 ## Development
 
 ```bash
@@ -147,10 +257,25 @@ go test ./...
 
 ## Next Milestones
 
-- Phase 2: telemetry query engine and filters
-- Phase 3: Supabase integration and aggregations
+- Phase 3: richer telemetry presets and saved reports
 - Phase 4: installers and release automation
 
 ## Plugin Metadata
 
 Syncbin plugin metadata lives in `plugin-metadata.yaml`.
+
+## Release Distribution Contract
+
+- Published binaries come from GitHub Releases tagged as `applogger-cli-v*`.
+- Source of truth for CLI base version: `cli/VERSION`.
+- Current release assets:
+  - `applogger-cli-linux-amd64`
+  - `applogger-cli-linux-arm64`
+  - `applogger-cli-darwin-amd64`
+  - `applogger-cli-darwin-arm64`
+  - `applogger-cli-windows-amd64.exe`
+  - `manifests/homebrew/applogger-cli.rb`
+  - `manifests/scoop/applogger-cli.json`
+  - `manifests/winget/DevZucca.AppLoggerCLI*.yaml`
+- Each asset is accompanied by a `.sha256` checksum file.
+- Package manager manifests are generated automatically on every `applogger-cli-v*` tag release.

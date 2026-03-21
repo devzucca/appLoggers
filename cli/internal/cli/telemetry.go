@@ -16,15 +16,16 @@ func newTelemetryCommand() *cobra.Command {
 	}
 
 	var (
-		sourceFlag    string
-		aggregateFlag string
-		fromFlag      string
-		toFlag        string
-		severityFlag  string
-		sessionFlag   string
-		tagFlag       string
-		nameFlag      string
-		limitFlag     int
+		sourceFlag      string
+		aggregateFlag   string
+		fromFlag        string
+		toFlag          string
+		severityFlag    string
+		sessionFlag     string
+		tagFlag         string
+		nameFlag        string
+		anomalyTypeFlag string
+		limitFlag       int
 	)
 
 	buildRequest := func() (telemetryQueryRequest, error) {
@@ -86,17 +87,21 @@ func newTelemetryCommand() *cobra.Command {
 		if strings.TrimSpace(nameFlag) != "" && source != "metrics" {
 			return telemetryQueryRequest{}, newUsageError("--name is only valid when --source=metrics")
 		}
+		if strings.TrimSpace(anomalyTypeFlag) != "" && source != "logs" {
+			return telemetryQueryRequest{}, newUsageError("--anomaly-type is only valid when --source=logs")
+		}
 
 		return telemetryQueryRequest{
-			Source:    source,
-			Aggregate: aggregate,
-			From:      fromFlag,
-			To:        toFlag,
-			Severity:  severity,
-			SessionID: strings.TrimSpace(sessionFlag),
-			Tag:       strings.TrimSpace(tagFlag),
-			Name:      strings.TrimSpace(nameFlag),
-			Limit:     limitFlag,
+			Source:      source,
+			Aggregate:   aggregate,
+			From:        fromFlag,
+			To:          toFlag,
+			Severity:    severity,
+			SessionID:   strings.TrimSpace(sessionFlag),
+			Tag:         strings.TrimSpace(tagFlag),
+			Name:        strings.TrimSpace(nameFlag),
+			AnomalyType: strings.TrimSpace(anomalyTypeFlag),
+			Limit:       limitFlag,
 		}, nil
 	}
 
@@ -105,7 +110,13 @@ func newTelemetryCommand() *cobra.Command {
 		if err != nil {
 			return telemetryQueryResponse{}, err
 		}
-		return queryTelemetry(context.Background(), cfg, req)
+		response, err := queryTelemetry(context.Background(), cfg, req)
+		if err != nil {
+			return telemetryQueryResponse{}, err
+		}
+		response.Project = cfg.Project
+		response.ConfigSource = cfg.ConfigSource
+		return response, nil
 	}
 
 	queryCmd := &cobra.Command{
@@ -184,6 +195,7 @@ func newTelemetryCommand() *cobra.Command {
 	queryCmd.Flags().StringVar(&sessionFlag, "session-id", "", "Session UUID filter")
 	queryCmd.Flags().StringVar(&tagFlag, "tag", "", "Tag filter (logs source only)")
 	queryCmd.Flags().StringVar(&nameFlag, "name", "", "Metric name filter (metrics source only)")
+	queryCmd.Flags().StringVar(&anomalyTypeFlag, "anomaly-type", "", "Anomaly type filter (logs source only, e.g. slow_response)")
 	queryCmd.Flags().IntVar(&limitFlag, "limit", 100, "Result size limit (1..1000)")
 
 	agentResponseCmd.Flags().StringVar(&sourceFlag, "source", "logs", "Telemetry source: logs|metrics")
@@ -194,6 +206,7 @@ func newTelemetryCommand() *cobra.Command {
 	agentResponseCmd.Flags().StringVar(&sessionFlag, "session-id", "", "Session UUID filter")
 	agentResponseCmd.Flags().StringVar(&tagFlag, "tag", "", "Tag filter (logs source only)")
 	agentResponseCmd.Flags().StringVar(&nameFlag, "name", "", "Metric name filter (metrics source only)")
+	agentResponseCmd.Flags().StringVar(&anomalyTypeFlag, "anomaly-type", "", "Anomaly type filter (logs source only, e.g. slow_response)")
 	agentResponseCmd.Flags().IntVar(&limitFlag, "limit", 100, "Result size limit (1..1000)")
 	agentResponseCmd.Flags().IntVar(&previewLimitFlag, "preview-limit", 5, "Max rows included in rows_preview for agents (0..50)")
 

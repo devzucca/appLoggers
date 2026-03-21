@@ -54,15 +54,93 @@ Desde Supabase Dashboard:
 
 Variables requeridas para CLI:
 
+- `appLogger_supabaseUrl`
+- `appLogger_supabaseKey` (service_role)
+
+Aliases compatibles:
+
 - `APPLOGGER_SUPABASE_URL`
-- `APPLOGGER_SUPABASE_KEY` (service_role)
+- `APPLOGGER_SUPABASE_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
 
 Opcionales:
 
-- `APPLOGGER_SUPABASE_SCHEMA` (default `public`)
-- `APPLOGGER_SUPABASE_LOG_TABLE` (default `app_logs`)
-- `APPLOGGER_SUPABASE_METRIC_TABLE` (default `app_metrics`)
-- `APPLOGGER_SUPABASE_TIMEOUT_SECONDS` (default `15`)
+- `appLogger_supabaseSchema` (default `public`)
+- `appLogger_supabaseLogTable` (default `app_logs`)
+- `appLogger_supabaseMetricTable` (default `app_metrics`)
+- `appLogger_supabaseTimeoutSeconds` (default `15`)
+
+## Paso 2b - Configuracion multi-proyecto para CLI + Wails
+
+Cuando el CLI opere varias aplicaciones de telemetria distintas
+(`klinema`, `klinematv`, etc.), la configuracion recomendada ya no es un solo
+par global de variables, sino un registro de proyectos compartido entre el CLI
+y la futura app de escritorio en Wails.
+
+Variables de control:
+
+- `APPLOGGER_CONFIG`: ruta al archivo JSON de proyectos.
+- `APPLOGGER_PROJECT`: seleccion explicita del proyecto activo.
+- `--config`: override por linea de comandos.
+- `--project`: override por linea de comandos.
+
+Ruta default del archivo:
+
+- Windows: `%AppData%/applogger/cli.json`
+- Linux/macOS: `$(os.UserConfigDir)/applogger/cli.json`
+
+Ejemplo recomendado:
+
+```json
+{
+  "default_project": "klinema",
+  "projects": [
+    {
+      "name": "klinema",
+      "display_name": "Klinema Mobile",
+      "workspace_roots": [
+        "D:/workspace/klinema"
+      ],
+      "supabase": {
+        "url": "https://klinema.supabase.co",
+        "api_key_env": "APPLOGGER_KLINEMA_SUPABASE_KEY",
+        "schema": "public",
+        "logs_table": "app_logs",
+        "metrics_table": "app_metrics",
+        "timeout_seconds": 15
+      }
+    },
+    {
+      "name": "klinematv",
+      "display_name": "Klinema TV",
+      "workspace_roots": [
+        "D:/workspace/klinematv"
+      ],
+      "supabase": {
+        "url": "https://klinematv.supabase.co",
+        "api_key_env": "APPLOGGER_KLINEMATV_SUPABASE_KEY"
+      }
+    }
+  ]
+}
+```
+
+Precedencia de resolucion:
+
+1. `--project`
+2. `APPLOGGER_PROJECT`
+3. Matching por `workspace_roots` contra el directorio actual
+4. `default_project`
+5. Unico proyecto configurado
+6. Fallback legacy a `appLogger_supabase*` / `APPLOGGER_SUPABASE_*` / `SUPABASE_*`
+
+Practica corporativa recomendada:
+
+- Guardar solo URL y metadata en el JSON.
+- Guardar el `service_role` en variables de entorno o secreto del sistema usando `api_key_env`.
+- Hacer que Wails administre el registro de proyectos y lance el CLI con el mismo modelo.
+- En SSE transmitir el proyecto resuelto y nunca la credencial cruda.
 
 ## Paso 3 - Crear usuario operativo del CLI
 
@@ -87,12 +165,12 @@ sudo install -m 600 -o root -g root /dev/null /etc/applogger-cli.env
 Contenido sugerido de `/etc/applogger-cli.env`:
 
 ```env
-APPLOGGER_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-APPLOGGER_SUPABASE_KEY=YOUR_SERVICE_ROLE_KEY
-APPLOGGER_SUPABASE_SCHEMA=public
-APPLOGGER_SUPABASE_LOG_TABLE=app_logs
-APPLOGGER_SUPABASE_METRIC_TABLE=app_metrics
-APPLOGGER_SUPABASE_TIMEOUT_SECONDS=15
+appLogger_supabaseUrl=https://YOUR_PROJECT.supabase.co
+appLogger_supabaseKey=YOUR_SERVICE_ROLE_KEY
+appLogger_supabaseSchema=public
+appLogger_supabaseLogTable=app_logs
+appLogger_supabaseMetricTable=app_metrics
+appLogger_supabaseTimeoutSeconds=15
 ```
 
 ### Windows
@@ -106,8 +184,8 @@ Opciones recomendadas:
 PowerShell para sesion actual:
 
 ```powershell
-$env:APPLOGGER_SUPABASE_URL = "https://YOUR_PROJECT.supabase.co"
-$env:APPLOGGER_SUPABASE_KEY = "YOUR_SERVICE_ROLE_KEY"
+$env:appLogger_supabaseUrl = "https://YOUR_PROJECT.supabase.co"
+$env:appLogger_supabaseKey = "YOUR_SERVICE_ROLE_KEY"
 ```
 
 ### CI/CD
@@ -120,9 +198,20 @@ Ejemplo GitHub Actions:
 
 ```yaml
 env:
-  APPLOGGER_SUPABASE_URL: ${{ secrets.APPLOGGER_SUPABASE_URL }}
-  APPLOGGER_SUPABASE_KEY: ${{ secrets.APPLOGGER_SUPABASE_SERVICE_ROLE_KEY }}
+  appLogger_supabaseUrl: ${{ secrets.APPLOGGER_SUPABASE_URL }}
+  appLogger_supabaseKey: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
 ```
+
+Para runners multi-proyecto, tambien puede inyectarse:
+
+```yaml
+env:
+  APPLOGGER_CONFIG: /opt/applogger/cli.json
+  APPLOGGER_PROJECT: klinema
+  APPLOGGER_KLINEMA_SUPABASE_KEY: ${{ secrets.APPLOGGER_KLINEMA_SUPABASE_KEY }}
+```
+
+Para `act` en local, definir el mismo par en `.act.secrets`. Si el workflow referencia un secret ausente, `act` lo inyecta vacio.
 
 ## Paso 4 - Verificacion operativa del CLI
 
@@ -160,7 +249,7 @@ Causas probables:
 
 Acciones:
 
-1. Verificar key cargada en `APPLOGGER_SUPABASE_KEY`.
+1. Verificar key cargada en `appLogger_supabaseKey`.
 2. Validar migraciones 004 y 006 aplicadas.
 
 ### Error de tabla no encontrada
@@ -173,7 +262,7 @@ Accion:
 
 ### Timeouts
 
-- Ajustar `APPLOGGER_SUPABASE_TIMEOUT_SECONDS` (1..120).
+- Ajustar `appLogger_supabaseTimeoutSeconds` (1..120).
 - Reducir rango temporal y limite en query.
 
 ## Matriz de responsabilidades

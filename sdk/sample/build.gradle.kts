@@ -10,8 +10,15 @@ android {
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
 
-        buildConfigField("String", "LOGGER_URL", "\"${project.findProperty("appLogger.url") ?: ""}\"")
-        buildConfigField("String", "LOGGER_KEY", "\"${project.findProperty("appLogger.anonKey") ?: ""}\"")
+        val loggerUrl = project.findProperty("appLogger_url")
+            ?: project.findProperty("appLogger.url")
+            ?: ""
+        val loggerKey = project.findProperty("appLogger_anonKey")
+            ?: project.findProperty("appLogger.anonKey")
+            ?: ""
+
+        buildConfigField("String", "LOGGER_URL", "\"${loggerUrl}\"")
+        buildConfigField("String", "LOGGER_KEY", "\"${loggerKey}\"")
     }
 
     buildFeatures { buildConfig = true }

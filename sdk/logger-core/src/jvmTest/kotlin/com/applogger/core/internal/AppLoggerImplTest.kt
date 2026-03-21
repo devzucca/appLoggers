@@ -216,6 +216,60 @@ class AppLoggerImplTest {
         assertNull(fakeTransport.sentEvents[0].userId)
     }
 
+    // ── Throwable propagation on non-critical levels ───────────────────────────
+
+    @Test
+    fun `debug throwable is captured in debug mode`() = runBlocking {
+        logger = createLogger(buildConfig(debugMode = true))
+        val exception = IllegalStateException("unexpected state")
+        logger.debug("TAG", "debug with throwable", throwable = exception)
+        delay(200)
+        processor.sendBatch()
+
+        assertEquals(1, fakeTransport.sentEvents.size)
+        val event = fakeTransport.sentEvents[0]
+        assertNotNull(event.throwableInfo)
+        assertEquals("IllegalStateException", event.throwableInfo?.type)
+        assertEquals("unexpected state", event.throwableInfo?.message)
+    }
+
+    @Test
+    fun `info throwable is captured in throwableInfo`() = runBlocking {
+        logger = createLogger(buildConfig(debugMode = false))
+        val exception = RuntimeException("info-level anomaly")
+        logger.info("PLAYER", "Recovered after error", throwable = exception)
+        delay(200)
+        processor.sendBatch()
+
+        assertEquals(1, fakeTransport.sentEvents.size)
+        assertNotNull(fakeTransport.sentEvents[0].throwableInfo)
+        assertEquals("RuntimeException", fakeTransport.sentEvents[0].throwableInfo?.type)
+    }
+
+    @Test
+    fun `warn throwable is captured alongside anomalyType`() = runBlocking {
+        logger = createLogger(buildConfig(debugMode = false))
+        val exception = Exception("timeout")
+        logger.warn("NETWORK", "Slow response", throwable = exception, anomalyType = "HIGH_LATENCY")
+        delay(200)
+        processor.sendBatch()
+
+        val event = fakeTransport.sentEvents[0]
+        assertNotNull(event.throwableInfo)
+        assertEquals("Exception", event.throwableInfo?.type)
+        assertEquals("HIGH_LATENCY", event.extra?.get("anomaly_type"))
+    }
+
+    @Test
+    fun `debug without throwable produces null throwableInfo`() = runBlocking {
+        logger = createLogger(buildConfig(debugMode = true))
+        logger.debug("TAG", "no throwable")
+        delay(200)
+        processor.sendBatch()
+
+        assertNull(fakeTransport.sentEvents[0].throwableInfo)
+    }
+
     /**
      * Simple recording transport for tests.
      */

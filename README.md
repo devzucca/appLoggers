@@ -79,6 +79,20 @@ appLoggers/
 - **Offline-first** — buffer FIFO en memoria con reintentos automáticos (backoff exponencial con jitter)
 - **Transporte intercambiable** — backend Supabase incluido; cualquier backend vía `LogTransport` custom
 
+## Versionado Profesional
+
+Single source of truth por superficie:
+
+- SDK: `sdk/gradle.properties` -> `VERSION_NAME`
+  - Se usa para publicar artefactos y para generar `AppLoggerVersion` automaticamente.
+- CLI: `cli/VERSION`
+  - El workflow de CLI lo usa para construir versiones en ramas y valida que el tag release `applogger-cli-v*` coincida con ese valor.
+
+Regla de release:
+
+- SDK release tag: `vX.Y.Z...` (pipeline SDK)
+- CLI release tag: `applogger-cli-vX.Y.Z...` (pipeline CLI)
+
 ---
 
 ## AppLogger CLI (Operaciones)
@@ -88,17 +102,14 @@ appLoggers/
 ### Instalación Rápida (3 minutos)
 
 ```bash
-# Linux / macOS
-curl -L https://github.com/devzucca/appLoggers/releases/download/applogger-cli-v0.1.0/applogger-cli-linux-amd64 \
-  -o /usr/local/bin/applogger-cli
-chmod +x /usr/local/bin/applogger-cli
+# Linux / macOS (instala la ultima release del CLI)
+curl -fsSL https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.sh | bash
 
 # Windows (PowerShell)
-$url = "https://github.com/devzucca/appLoggers/releases/download/applogger-cli-v0.1.0/applogger-cli-windows-amd64.exe"
-Invoke-WebRequest -Uri $url -OutFile "$env:ProgramFiles\applogger-cli.exe"
+irm https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.ps1 | iex
 
 # Verificar
-applogger-cli --version
+applogger-cli version --output json
 ```
 
 ### Primeros Comandos
@@ -196,7 +207,7 @@ applogger-cli telemetry agent-response \
 | Android SDK | API 35 (compileSdk) | Android Studio → SDK Manager |
 | Gradle | 8.10.2 (usa el wrapper) | `cd sdk && ./gradlew --version` |
 | Git | 2.30+ | `git --version` |
-| Go | 1.25+ (solo si editas el CLI) | `go version` |
+| Go | 1.24+ (solo si editas el CLI) | `go version` |
 
 ### Paso 1 — Clonar el repositorio
 
@@ -224,21 +235,21 @@ sdk.dir=C:\\Users\\TU_USUARIO\\AppData\\Local\\Android\\Sdk
 
 # ── Supabase (backend de logs) ──────────────────────────────────────────
 # Obtener de: https://supabase.com/dashboard → Settings → API
-appLogger.url=https://TU-PROYECTO.supabase.co
-appLogger.anonKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+appLogger_url=https://TU-PROYECTO.supabase.co
+appLogger_anonKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # ── Modo Debug ──────────────────────────────────────────────────────────
 # true  → logs en Logcat + envío al backend (desarrollo)
 # false → solo envío al backend, sin output local (producción)
-appLogger.debug=true
+appLogger_debug=true
 ```
 
 | Variable | Obligatoria | Dónde obtenerla |
 |---|:---:|---|
 | `sdk.dir` | ✅ | Android Studio lo autocompleta, o ver `ANDROID_HOME` |
-| `appLogger.url` | ✅ | [Supabase Dashboard](https://supabase.com/dashboard) → Settings → API → Project URL |
-| `appLogger.anonKey` | ✅ | Supabase Dashboard → Settings → API → `anon` `public` key |
-| `appLogger.debug` | ❌ | `true` para desarrollo, `false` para producción (default: `false`) |
+| `appLogger_url` | ✅ | [Supabase Dashboard](https://supabase.com/dashboard) → Settings → API → Project URL |
+| `appLogger_anonKey` | ✅ | Supabase Dashboard → Settings → API → `anon` `public` key |
+| `appLogger_debug` | ❌ | `true` para desarrollo, `false` para producción (default: `false`) |
 
 > ⚠️ **`local.properties` está en `.gitignore`** — nunca se sube al repositorio.  
 > Si clonás el repo y no existe, copiá desde `local.properties.example`.
@@ -266,9 +277,9 @@ android {
             val file = rootProject.file("local.properties")
             if (file.exists()) load(file.inputStream())
         }
-        buildConfigField("String",  "LOGGER_URL",  "\"${props["appLogger.url"] ?: ""}\"")
-        buildConfigField("String",  "LOGGER_KEY",  "\"${props["appLogger.anonKey"] ?: ""}\"")
-        buildConfigField("Boolean", "LOGGER_DEBUG", "${props["appLogger.debug"] ?: false}")
+        buildConfigField("String",  "LOGGER_URL",  "\"${props["appLogger_url"] ?: ""}\"")
+        buildConfigField("String",  "LOGGER_KEY",  "\"${props["appLogger_anonKey"] ?: ""}\"")
+        buildConfigField("Boolean", "LOGGER_DEBUG", "${props["appLogger_debug"] ?: false}")
     }
 }
 ```
@@ -372,7 +383,8 @@ class MyApp : Application() {
             config = AppLoggerConfig.Builder()
                 .endpoint(BuildConfig.LOGGER_URL)
                 .apiKey(BuildConfig.LOGGER_KEY)
-                .debugMode(BuildConfig.DEBUG)
+                .debugMode(BuildConfig.LOGGER_DEBUG)
+                .consoleOutput(BuildConfig.LOGGER_DEBUG)
                 .batchSize(20)
                 .flushIntervalSeconds(30)
                 .build(),
@@ -387,9 +399,15 @@ class MyApp : Application() {
 // 3. Usar en cualquier lugar — fire-and-forget
 AppLoggerSDK.error("PAYMENT", "Transaction failed", throwable)
 AppLoggerSDK.info("PLAYER", "Playback started", extra = mapOf("content_id" to "movie_123"))
-AppLoggerSDK.warn("NETWORK", "Slow response", anomalyType = "HIGH_LATENCY")
+AppLoggerSDK.info("PLAYER", "Recovering after error", throwable = e)      // throwable opcional
+AppLoggerSDK.warn("NETWORK", "Slow response", throwable = e, anomalyType = "HIGH_LATENCY")
+AppLoggerSDK.debug("TAG", "Solo visible en debug", throwable = e)          // throwable opcional
 AppLoggerSDK.metric("screen_load_time", 1234.0, "ms", tags = mapOf("screen" to "Home"))
-AppLoggerSDK.debug("TAG", "Solo visible en debug")
+
+// 4. Extension functions — tag inferido automáticamente del nombre de clase
+//    (disponible en todos los targets via AppLoggerExtensions.kt)
+this.logE(logger, "Playback failed", throwable = e)    // tag → nombre de la clase actual
+this.logW(logger, "Buffer low", anomalyType = "BUFFER_LOW")
 ```
 
 ### iOS (Kotlin `iosMain`)
@@ -414,7 +432,7 @@ AppLoggerIos.shared.metric("buffer_time", 420.0, "ms")
 | 4 | `docs/ES/migraciones/004_rls_policies.sql` | Políticas de seguridad (RLS) |
 | 5 | `docs/ES/migraciones/005_retention_policy.sql` | Retención automática de datos |
 
-3. Copiá la **URL del proyecto** y la **anon key** a tu `local.properties`
+1. Copiá la **URL del proyecto** y la **anon key** a tu `local.properties`
 
 ---
 
@@ -447,7 +465,7 @@ Para que el pipeline funcione al 100%, configurá estos secrets en **GitHub → 
 
 | Secret | Requerido por | Dónde obtenerlo |
 |---|---|---|
-| `APPLOGGER_SUPABASE_URL` | Job `e2e` | Supabase Dashboard → Settings → API → Project URL |
+| `appLogger_supabaseUrl` | Job `e2e` | Supabase Dashboard → Settings → API → Project URL |
 | `APPLOGGER_SUPABASE_ANON_KEY` | Job `e2e` | Supabase Dashboard → Settings → API → `anon` `public` key |
 | `APPLOGGER_SUPABASE_SERVICE_KEY` | Job `e2e` | Supabase Dashboard → Settings → API → `service_role` key |
 | `CODECOV_TOKEN` | Job `test` (opcional) | [codecov.io](https://codecov.io) → Settings → Token |

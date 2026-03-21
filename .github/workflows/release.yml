@@ -28,6 +28,9 @@ jobs:
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Run All Tests
         run: ./gradlew check
 
@@ -62,6 +65,9 @@ jobs:
 
       - name: Override local JDK path for CI
         run: sed -i '/org.gradle.java.home/d' gradle.properties
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
 
       - name: Publish to GitHub Packages
         env:

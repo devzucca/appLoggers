@@ -181,7 +181,7 @@ Editar con los valores reales:
 sdk.dir=C\:\\Users\\<tuUsuario>\\AppData\\Local\\Android\\Sdk
 
 # ─── Supabase ────────────────────────────────────────────────
-APPLOGGER_SUPABASE_URL=https://hqvkrsmlphjnkefpfpzg.supabase.co
+appLogger_supabaseUrl=https://hqvkrsmlphjnkefpfpzg.supabase.co
 APPLOGGER_SUPABASE_ANON_KEY=<tu-anon-key>
 APPLOGGER_SUPABASE_SERVICE_KEY=<tu-service-key>
 
@@ -311,7 +311,9 @@ act push -W .github/workflows/ci.yml --job test
 |---|---|---|
 | Composite actions en v4 | Puede fallar con `unsupported object type` al resolver tags | Usar `./gradlew` directamente (Sección 6) |
 | Android SDK | La imagen `act-latest` no incluye Android SDK | Solo correr jobs que no requieran compilación Android |
+| Permisos de `gradlew` en Windows | `act` puede perder el execute bit al copiar desde NTFS al contenedor Linux | Mantener `chmod +x ./gradlew` en los workflows |
 | CodeQL | Requiere autenticación GitHub y no funciona en local | Solo corre en CI remoto |
+| Upload de artifacts | `actions/upload-artifact` puede fallar sin `ACTIONS_RUNTIME_TOKEN` | Validar compilación y tests localmente; dejar upload para CI remoto |
 | Secretos | `.act.secrets` requiere valores reales para tests e2e | Usar mocks para desarrollo local |
 
 > **Recomendación:** Para el desarrollo diario, usar las verificaciones manuales de la Sección 6. Reservar `act` para verificar cambios en los propios archivos `.github/workflows/`.
@@ -382,7 +384,7 @@ Verificar que `JAVA_HOME` apunta a JDK 17 (no 21, no 25). El CI usa estrictament
 
 ### Supabase e2e tests fallan localmente
 
-Los tests en `SupabaseE2ETest.kt` requieren credenciales reales en `local.properties`. Asegurarse de que `APPLOGGER_SUPABASE_URL`, `APPLOGGER_SUPABASE_ANON_KEY`, y `APPLOGGER_SUPABASE_SERVICE_KEY` estén configurados. Los tests e2e solo corren en CI cuando se hace push a `main`.
+Los tests en `SupabaseE2ETest.kt` requieren credenciales reales en `local.properties`. Asegurarse de que `appLogger_supabaseUrl`, `APPLOGGER_SUPABASE_ANON_KEY`, y `APPLOGGER_SUPABASE_SERVICE_KEY` estén configurados. Los tests e2e solo corren en CI cuando se hace push a `main`.
 
 ---
 

@@ -8,6 +8,17 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.0.0/) y el p
 
 ## [Unreleased]
 
+### Added
+- `throwable: Throwable? = null` opcional en `debug()` e `info()` — permite capturar stack traces
+  en niveles no-críticos sin cambios breaking en call-sites existentes.
+- `throwable: Throwable? = null` opcional en `warn()` — parámetro insertado antes de `anomalyType`;
+  todas las llamadas existentes con named params no se ven afectadas.
+- **`AppLoggerExtensions.kt`** (commonMain, todos los targets) — extension functions que reducen boilerplate:
+  - `AppLogger.logD/I/W/E/C(tag, message, throwable?, extra?)` — shorthands sobre el objeto logger.
+  - `Any.logTag()` — derivación automática del tag desde el nombre de clase.
+  - `Any.logD/I/W/E/C(logger, message, throwable?, extra?)` — extensiones sobre cualquier objeto
+    con tag inferido automáticamente (`this::class.simpleName`).
+
 ### Planned
 - Módulo `logger-transport-firebase` — transporte a Firebase Realtime Database
 - `SqliteOfflineBuffer` — persistencia FIFO en SQLite usando el esquema SQLDelight ya definido (`offline_logs`)

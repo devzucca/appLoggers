@@ -29,6 +29,35 @@ This skill enables AI agents and automation systems to **safely, predictably, an
 
 ## Core Concepts
 
+### 0. Instalacion bootstrap del CLI
+
+Si `applogger-cli` no existe aun en la maquina del agente, instalar primero:
+
+```bash
+# Linux
+curl -fsSL https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.sh | bash
+
+# macOS (Intel / Apple Silicon)
+curl -fsSL https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.sh | bash
+```
+
+```powershell
+# Windows PowerShell
+irm https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.ps1 | iex
+```
+
+Despues verificar:
+
+```bash
+applogger-cli version --output json
+```
+
+Reglas:
+
+- Si el instalador cambia `PATH`, abrir una nueva shell o ejecutar por ruta absoluta una vez.
+- Para fijar version: definir `APPLOGGER_CLI_VERSION=applogger-cli-vX.Y.Z` antes de instalar.
+- En macOS y Linux el instalador exige verificacion SHA-256 y falla si no existe `sha256sum` ni `shasum`.
+
 ### 1. Agent Contract Discovery
 
 Before executing any command, **always** discover capabilities and schema:
@@ -45,6 +74,32 @@ applogger-cli health --output json
 ```
 
 **Why?** The CLI may have new commands, output format changes, or schema updates between versions. Discovery ensures forward compatibility.
+
+### 1.1 Multi-Project Resolution (Corporate Mode)
+
+When operating multiple telemetry apps (for example `klinema` and `klinematv`),
+agents must resolve the active project deterministically.
+
+Resolution precedence:
+
+1. `--project <name>`
+2. `APPLOGGER_PROJECT`
+3. Workspace autodetection via `workspace_roots`
+4. `default_project`
+5. Single configured project
+6. Legacy environment variables (`appLogger_supabase*`, `APPLOGGER_SUPABASE_*`, `SUPABASE_*`)
+
+Project config path precedence:
+
+1. `--config <path>`
+2. `APPLOGGER_CONFIG`
+3. Default user config path (`os.UserConfigDir()/applogger/cli.json`)
+
+Rules for agents:
+
+- Prefer project profiles for production automation.
+- Prefer `api_key_env` in the JSON config instead of inline secrets.
+- Parse `project` and `config_source` from health/telemetry outputs for auditability.
 
 ### 2. Three Output Modes (Choose Wisely)
 
@@ -101,9 +156,9 @@ if ! command -v applogger-cli &> /dev/null; then
   exit 127
 fi
 
-# 2. Verify credentials are set
-if [ -z "$APPLOGGER_SUPABASE_URL" ] || [ -z "$APPLOGGER_SUPABASE_KEY" ]; then
-  echo "FATAL: APPLOGGER_SUPABASE_URL or APPLOGGER_SUPABASE_KEY not set"
+# 2. Verify project resolution inputs are set (project mode) OR legacy env vars exist
+if [ -z "$APPLOGGER_CONFIG" ] && { [ -z "$appLogger_supabaseUrl" ] || [ -z "$appLogger_supabaseKey" ]; }; then
+  echo "FATAL: set APPLOGGER_CONFIG (recommended) or appLogger_supabaseUrl/appLogger_supabaseKey"
   exit 1
 fi
 
@@ -114,8 +169,8 @@ if [ -z "$VERSION" ]; then
   exit 1
 fi
 
-# 4. Verify backend is healthy
-HEALTH=$(applogger-cli health --output json)
+# 4. Verify backend is healthy (optionally pin project)
+HEALTH=$(applogger-cli ${APPLOGGER_PROJECT:+--project "$APPLOGGER_PROJECT"} health --output json)
 if ! jq -e '.ok' <<< "$HEALTH" > /dev/null 2>&1; then
   echo "FATAL: Backend health check failed"
   echo "$HEALTH" | jq .
@@ -125,6 +180,8 @@ fi
 echo "✓ Pre-flight check passed"
 echo "  - CLI version: $VERSION"
 echo "  - Backend: $(jq '.services.supabase' <<< "$HEALTH")"
+echo "  - Project: $(jq -r '.project // "legacy-env"' <<< "$HEALTH")"
+echo "  - Config source: $(jq -r '.config_source // "environment"' <<< "$HEALTH")"
 ```
 
 ### Workflow 2: Safe Telemetry Query
@@ -367,6 +424,14 @@ applogger-cli telemetry query \
   --limit 25 \
   --output json
 
+# Filter warning anomalies stored in extra.anomaly_type
+applogger-cli telemetry query \
+  --source logs \
+  --severity warn \
+  --anomaly-type slow_response \
+  --limit 25 \
+  --output json
+
 # Piping for further processing
 applogger-cli telemetry query \
   --source metrics \
@@ -422,23 +487,23 @@ print(result['kind'])
 
 ```go
 import (
-	"encoding/json"
-	"os/exec"
+ "encoding/json"
+ "os/exec"
 )
 
 // Struct matching telemetry_agent_response
 type AgentResponse struct {
-	Kind   string `json:"kind"`
-	OK     bool   `json:"ok"`
-	Source string `json:"source"`
-	Count  int    `json:"count"`
+ Kind   string `json:"kind"`
+ OK     bool   `json:"ok"`
+ Source string `json:"source"`
+ Count  int    `json:"count"`
 }
 
 // Execute
 cmd := exec.Command("applogger-cli", "telemetry", "agent-response",
-	"--source", "logs",
-	"--aggregate", "severity",
-	"--output", "agent")
+ "--source", "logs",
+ "--aggregate", "severity",
+ "--output", "agent")
 
 output, _ := cmd.Output()
 
@@ -626,20 +691,18 @@ jobs:
     steps:
       - name: Install CLI
         run: |
-          curl -L https://github.com/devzucca/appLoggers/releases/download/applogger-cli-v0.1.0/applogger-cli-linux-amd64 \
-            -o /tmp/applogger-cli
-          chmod +x /tmp/applogger-cli
+          curl -fsSL https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.sh | bash
 
       - name: Query errors (last 24h)
         env:
-          APPLOGGER_SUPABASE_URL: ${{ secrets.APPLOGGER_SUPABASE_URL }}
-          APPLOGGER_SUPABASE_KEY: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
+          appLogger_supabaseUrl: ${{ secrets.APPLOGGER_SUPABASE_URL }}
+          appLogger_supabaseKey: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
         run: |
           /tmp/applogger-cli telemetry query \
             --source logs \
             --severity error \
-            --create-report audit-$(date +%Y%m%d).json \
-            --output json
+            --output json \
+            > audit-$(date +%Y%m%d).json
 
       - name: Upload report
         uses: actions/upload-artifact@v4
@@ -676,19 +739,18 @@ which applogger-cli
 echo $PATH
 
 # Reinstall
-curl -L https://github.com/devzucca/appLoggers/releases/download/applogger-cli-v0.1.0/applogger-cli-linux-amd64 \
-  -o /usr/local/bin/applogger-cli && chmod +x /usr/local/bin/applogger-cli
+curl -fsSL https://raw.githubusercontent.com/devzucca/appLoggers/main/cli/install/install.sh | bash
 ```
 
 ### "backend health check failed"
 
 ```bash
 # Verify credentials
-echo "URL: $APPLOGGER_SUPABASE_URL"
-echo "Key: ${APPLOGGER_SUPABASE_KEY:0:10}..."
+echo "URL: $appLogger_supabaseUrl"
+echo "Key: ${appLogger_supabaseKey:0:10}..."
 
 # Test connectivity
-curl -s "$APPLOGGER_SUPABASE_URL/rest/v1/?apikey=$APPLOGGER_SUPABASE_KEY" | jq .
+curl -s "$appLogger_supabaseUrl/rest/v1/?apikey=$appLogger_supabaseKey" | jq .
 
 # Check Supabase dashboard
 # https://supabase.com/dashboard → Status
@@ -734,7 +796,7 @@ A: No. Each `applogger-cli` call hits Supabase. Cache in your agent if needed.
 
 | CLI Version | Node Version | Go | Status |
 |---|---|---|---|
-| 0.1.0-alpha.0+ | N/A | 1.25+ | Current |
+| 0.1.0-alpha.0+ | N/A | 1.24+ | Current |
 | 0.2.0+ (planned) | N/A | 1.26+ | Future |
 
 ---

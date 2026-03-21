@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -167,8 +168,8 @@ func TestTelemetryQueryContractJSON(t *testing.T) {
 		"--output", "json",
 	)
 	cmd.Env = append(cmd.Env,
-		"APPLOGGER_SUPABASE_URL="+mockSupabase.URL,
-		"APPLOGGER_SUPABASE_KEY=test-key",
+		"appLogger_supabaseUrl="+mockSupabase.URL,
+		"appLogger_supabaseKey=test-key",
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -227,8 +228,8 @@ func TestTelemetryAgentResponseTOON(t *testing.T) {
 		"--preview-limit", "1",
 	)
 	cmd.Env = append(cmd.Env,
-		"APPLOGGER_SUPABASE_URL="+mockSupabase.URL,
-		"APPLOGGER_SUPABASE_KEY=test-key",
+		"appLogger_supabaseUrl="+mockSupabase.URL,
+		"appLogger_supabaseKey=test-key",
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -290,8 +291,8 @@ func TestTelemetryQueryMetricsNameFilterJSON(t *testing.T) {
 		"--output", "json",
 	)
 	cmd.Env = append(cmd.Env,
-		"APPLOGGER_SUPABASE_URL="+mockSupabase.URL,
-		"APPLOGGER_SUPABASE_KEY=test-key",
+		"appLogger_supabaseUrl="+mockSupabase.URL,
+		"appLogger_supabaseKey=test-key",
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -303,6 +304,263 @@ func TestTelemetryQueryMetricsNameFilterJSON(t *testing.T) {
 	}
 	if !strings.Contains(text, "\"name\": \"response_time_ms\"") {
 		t.Fatalf("expected name filter echo in response, output=%s", text)
+	}
+}
+
+func TestTelemetryQueryLogsAnomalyTypeFilterAndExtraJSON(t *testing.T) {
+	binary := buildCLI(t)
+	mockSupabase := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/rest/v1/app_logs" {
+			http.Error(w, "unexpected path", http.StatusNotFound)
+			return
+		}
+		if r.URL.Query().Get("level") != "eq.WARN" {
+			http.Error(w, "unexpected level filter", http.StatusBadRequest)
+			return
+		}
+		if r.URL.Query().Get("extra->>anomaly_type") != "eq.slow_response" {
+			http.Error(w, "unexpected anomaly_type filter", http.StatusBadRequest)
+			return
+		}
+		if !strings.Contains(r.URL.RawQuery, "select=id%2Ccreated_at%2Clevel%2Ctag%2Cmessage%2Csession_id%2Csdk_version%2Cextra") {
+			http.Error(w, "expected extra in select columns", http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[
+			{"id":"1","created_at":"2026-03-01T00:00:00Z","level":"WARN","tag":"network","message":"slow call","session_id":"s-1","sdk_version":"dev","extra":{"anomaly_type":"slow_response","latency_ms":"2500"}}
+		]`))
+	}))
+	defer mockSupabase.Close()
+
+	cmd := exec.Command(
+		binary,
+		"telemetry",
+		"query",
+		"--source", "logs",
+		"--severity", "warn",
+		"--anomaly-type", "slow_response",
+		"--limit", "10",
+		"--output", "json",
+	)
+	cmd.Env = append(cmd.Env,
+		"appLogger_supabaseUrl="+mockSupabase.URL,
+		"appLogger_supabaseKey=test-key",
+	)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("telemetry anomaly_type query failed: %v, output=%s", err, string(out))
+	}
+	text := string(out)
+	if !strings.Contains(text, "\"anomaly_type\": \"slow_response\"") {
+		t.Fatalf("expected anomaly_type echo in response, output=%s", text)
+	}
+	if !strings.Contains(text, "\"extra\": {") {
+		t.Fatalf("expected extra object in response rows, output=%s", text)
+	}
+	if !strings.Contains(text, "\"latency_ms\": \"2500\"") {
+		t.Fatalf("expected extra payload content in response rows, output=%s", text)
+	}
+	if !strings.Contains(text, "\"severity\": \"warn\"") {
+		t.Fatalf("expected severity echo in request block, output=%s", text)
+	}
+}
+
+func TestTelemetryQueryAnomalyTypeInvalidForMetrics(t *testing.T) {
+	binary := buildCLI(t)
+	cmd := exec.Command(binary, "telemetry", "query", "--source", "metrics", "--anomaly-type", "slow_response", "--output", "json")
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatal("expected usage error for --anomaly-type with metrics source")
+	}
+	if cmd.ProcessState.ExitCode() != 2 {
+		t.Fatalf("expected exit code 2, got %d", cmd.ProcessState.ExitCode())
+	}
+	if !strings.Contains(string(out), "\"error_kind\": \"usage_error\"") {
+		t.Fatalf("expected usage error envelope, output=%s", string(out))
+	}
+}
+
+func TestTelemetryQueryProjectProfileExplicitJSON(t *testing.T) {
+	binary := buildCLI(t)
+	workspace := t.TempDir()
+	configPath := filepath.Join(t.TempDir(), "applogger-cli.json")
+	writeProjectConfig(t, configPath, map[string]any{
+		"projects": []map[string]any{
+			{
+				"name":            "klinema",
+				"workspace_roots": []string{workspace},
+				"supabase": map[string]any{
+					"url":         "http://placeholder.invalid",
+					"api_key_env": "APPLOGGER_KLINEMA_SUPABASE_KEY",
+				},
+			},
+		},
+	})
+
+	mockSupabase := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[ {"id":"1","created_at":"2026-03-01T00:00:00Z","level":"ERROR","tag":"api","message":"boom"} ]`))
+	}))
+	defer mockSupabase.Close()
+
+	writeProjectConfig(t, configPath, map[string]any{
+		"projects": []map[string]any{
+			{
+				"name":            "klinema",
+				"workspace_roots": []string{workspace},
+				"supabase": map[string]any{
+					"url":         mockSupabase.URL,
+					"api_key_env": "APPLOGGER_KLINEMA_SUPABASE_KEY",
+				},
+			},
+		},
+	})
+
+	cmd := exec.Command(binary, "--project", "klinema", "telemetry", "query", "--source", "logs", "--limit", "10", "--output", "json")
+	cmd.Dir = workspace
+	cmd.Env = append(os.Environ(),
+		"APPLOGGER_CONFIG="+configPath,
+		"APPLOGGER_KLINEMA_SUPABASE_KEY=test-key",
+	)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("telemetry query with explicit project failed: %v, output=%s", err, string(out))
+	}
+	text := string(out)
+	if !strings.Contains(text, "\"project\": \"klinema\"") {
+		t.Fatalf("expected project name in response, output=%s", text)
+	}
+	if !strings.Contains(text, "\"config_source\": \"project_config\"") {
+		t.Fatalf("expected project config source in response, output=%s", text)
+	}
+}
+
+func TestTelemetryQueryProjectProfileSingleProjectAutoSelectionJSON(t *testing.T) {
+	binary := buildCLI(t)
+	configPath := filepath.Join(t.TempDir(), "applogger-cli.json")
+	mockSupabase := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[ {"id":"1","created_at":"2026-03-01T00:00:00Z","name":"response_time_ms","value":123.4,"unit":"ms"} ]`))
+	}))
+	defer mockSupabase.Close()
+
+	writeProjectConfig(t, configPath, map[string]any{
+		"projects": []map[string]any{
+			{
+				"name": "klinematv",
+				"supabase": map[string]any{
+					"url":         mockSupabase.URL,
+					"api_key_env": "APPLOGGER_KLINEMATV_SUPABASE_KEY",
+				},
+			},
+		},
+	})
+
+	cmd := exec.Command(binary, "telemetry", "query", "--source", "metrics", "--name", "response_time_ms", "--limit", "10", "--output", "json")
+	cmd.Env = append(os.Environ(),
+		"APPLOGGER_CONFIG="+configPath,
+		"APPLOGGER_KLINEMATV_SUPABASE_KEY=test-key",
+	)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("telemetry query with single-project auto selection failed: %v, output=%s", err, string(out))
+	}
+	text := string(out)
+	if !strings.Contains(text, "\"project\": \"klinematv\"") {
+		t.Fatalf("expected single configured project name in response, output=%s", text)
+	}
+	if !strings.Contains(text, "\"source\": \"metrics\"") {
+		t.Fatalf("expected metrics source in response, output=%s", text)
+	}
+}
+
+func TestTelemetryAgentResponseProjectProfileTOON(t *testing.T) {
+	binary := buildCLI(t)
+	configPath := filepath.Join(t.TempDir(), "applogger-cli.json")
+	mockSupabase := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[
+			{"id":"1","created_at":"2026-03-01T00:00:00Z","level":"ERROR","tag":"api","message":"boom"}
+		]`))
+	}))
+	defer mockSupabase.Close()
+
+	writeProjectConfig(t, configPath, map[string]any{
+		"projects": []map[string]any{
+			{
+				"name": "klinema",
+				"supabase": map[string]any{
+					"url":         mockSupabase.URL,
+					"api_key_env": "APPLOGGER_KLINEMA_SUPABASE_KEY",
+				},
+			},
+		},
+	})
+
+	cmd := exec.Command(binary, "--project", "klinema", "telemetry", "agent-response", "--source", "logs", "--preview-limit", "1")
+	cmd.Env = append(os.Environ(),
+		"APPLOGGER_CONFIG="+configPath,
+		"APPLOGGER_KLINEMA_SUPABASE_KEY=test-key",
+	)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("agent-response with project profile failed: %v, output=%s", err, string(out))
+	}
+	text := string(out)
+	if !strings.Contains(text, "project: klinema") {
+		t.Fatalf("expected project in TOON output, output=%s", text)
+	}
+	if !strings.Contains(text, "config_source: project_config") {
+		t.Fatalf("expected config_source in TOON output, output=%s", text)
+	}
+}
+
+func TestTelemetryQueryProjectProfileAmbiguousWorkspaceFails(t *testing.T) {
+	binary := buildCLI(t)
+	workspace := t.TempDir()
+	configPath := filepath.Join(t.TempDir(), "applogger-cli.json")
+	writeProjectConfig(t, configPath, map[string]any{
+		"projects": []map[string]any{
+			{
+				"name":            "klinema",
+				"workspace_roots": []string{workspace},
+				"supabase": map[string]any{
+					"url":         "https://klinema.supabase.co",
+					"api_key_env": "APPLOGGER_KLINEMA_SUPABASE_KEY",
+				},
+			},
+			{
+				"name":            "klinematv",
+				"workspace_roots": []string{workspace},
+				"supabase": map[string]any{
+					"url":         "https://klinematv.supabase.co",
+					"api_key_env": "APPLOGGER_KLINEMATV_SUPABASE_KEY",
+				},
+			},
+		},
+	})
+
+	cmd := exec.Command(binary, "telemetry", "query", "--output", "json")
+	cmd.Dir = workspace
+	cmd.Env = append(os.Environ(), "APPLOGGER_CONFIG="+configPath)
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatal("expected ambiguous workspace resolution to fail")
+	}
+	if !strings.Contains(string(out), "multiple projects") || !strings.Contains(string(out), "use --project or APPLOGGER_PROJECT") {
+		t.Fatalf("expected ambiguity error, output=%s", string(out))
+	}
+}
+
+func writeProjectConfig(t *testing.T, path string, payload any) {
+	t.Helper()
+	content, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("failed to marshal project config: %v", err)
+	}
+	if err := os.WriteFile(path, content, 0o600); err != nil {
+		t.Fatalf("failed to write project config: %v", err)
 	}
 }
 

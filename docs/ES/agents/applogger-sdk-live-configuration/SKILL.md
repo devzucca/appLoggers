@@ -22,12 +22,26 @@ Examples:
 3. Add only missing AppLogger keys.
 4. Never rename/delete unrelated existing keys.
 5. Never print full secrets in output.
+6. Use canonical imports only: `com.applogger.core.*` and `com.applogger.transport.supabase.SupabaseTransport`.
+7. Never suggest `com.applogger.sdk.*` imports.
 
 ## Required SDK config keys
 
-1. `appLogger.url`
-2. `appLogger.anonKey`
-3. `appLogger.debug`
+1. `appLogger_url`
+2. `appLogger_anonKey`
+3. `appLogger_debug`
+
+## Debug output behavior
+
+1. Logcat output on Android appears only when `isDebugMode=true` and `consoleOutput=true`.
+2. In standard setups, `appLogger_debug` maps to both `debugMode` and `consoleOutput`, so `appLogger_debug=true` enables Logcat output.
+3. No additional Logcat configuration, logging wrapper, or Android logger setup is required.
+4. Never set `appLogger_debug=true` in production builds.
+
+Source of truth in AppLoggers SDK:
+
+1. `sdk/logger-core/src/commonMain/kotlin/com/applogger/core/internal/AppLoggerImpl.kt` — console emission guard is `if (config.isDebugMode && config.consoleOutput)`.
+2. `sdk/logger-core/src/commonMain/kotlin/com/applogger/core/AppLoggerConfig.kt` — Builder default is `consoleOutput = true`.
 
 ## Workflow
 

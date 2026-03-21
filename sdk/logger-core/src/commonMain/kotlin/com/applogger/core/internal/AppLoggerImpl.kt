@@ -18,20 +18,26 @@ internal class AppLoggerImpl(
     @Volatile
     private var userId: String? = null
 
-    override fun debug(tag: String, message: String, extra: Map<String, Any>?) {
-        process(LogLevel.DEBUG, tag, message, extra = extra)
+    override fun debug(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) {
+        process(LogLevel.DEBUG, tag, message, throwable, extra = extra)
     }
 
-    override fun info(tag: String, message: String, extra: Map<String, Any>?) {
-        process(LogLevel.INFO, tag, message, extra = extra)
+    override fun info(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) {
+        process(LogLevel.INFO, tag, message, throwable, extra = extra)
     }
 
-    override fun warn(tag: String, message: String, anomalyType: String?, extra: Map<String, Any>?) {
+    override fun warn(
+        tag: String,
+        message: String,
+        throwable: Throwable?,
+        anomalyType: String?,
+        extra: Map<String, Any>?
+    ) {
         val mergedExtra = buildMap {
             extra?.forEach { (k, v) -> put(k, v.toString()) }
             anomalyType?.let { put("anomaly_type", it) }
         }.ifEmpty { null }
-        process(LogLevel.WARN, tag, message, extraStr = mergedExtra)
+        process(LogLevel.WARN, tag, message, throwable, extraStr = mergedExtra)
     }
 
     override fun error(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) {
