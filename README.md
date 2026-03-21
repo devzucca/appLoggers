@@ -388,9 +388,15 @@ class MyApp : Application() {
 // 3. Usar en cualquier lugar — fire-and-forget
 AppLoggerSDK.error("PAYMENT", "Transaction failed", throwable)
 AppLoggerSDK.info("PLAYER", "Playback started", extra = mapOf("content_id" to "movie_123"))
-AppLoggerSDK.warn("NETWORK", "Slow response", anomalyType = "HIGH_LATENCY")
+AppLoggerSDK.info("PLAYER", "Recovering after error", throwable = e)      // throwable opcional
+AppLoggerSDK.warn("NETWORK", "Slow response", throwable = e, anomalyType = "HIGH_LATENCY")
+AppLoggerSDK.debug("TAG", "Solo visible en debug", throwable = e)          // throwable opcional
 AppLoggerSDK.metric("screen_load_time", 1234.0, "ms", tags = mapOf("screen" to "Home"))
-AppLoggerSDK.debug("TAG", "Solo visible en debug")
+
+// 4. Extension functions — tag inferido automáticamente del nombre de clase
+//    (disponible en todos los targets via AppLoggerExtensions.kt)
+this.logE(logger, "Playback failed", throwable = e)    // tag → nombre de la clase actual
+this.logW(logger, "Buffer low", anomalyType = "BUFFER_LOW")
 ```
 
 ### iOS (Kotlin `iosMain`)

@@ -66,6 +66,7 @@ appLoggers/
 │       ├── commonMain/kotlin/
 │       │   └── com/applogger/core/
 │       │       ├── AppLogger.kt             (trait público)
+│       │       ├── AppLoggerExtensions.kt   (extension functions logD/I/W/E/C)
 │       │       ├── LogTransport.kt          (trait de transporte)
 │       │       ├── LogBuffer.kt             (trait de buffer)
 │       │       ├── LogFormatter.kt          (trait de formato)
@@ -216,15 +217,58 @@ Cada dependencia es **inyectable**: en producción se instancian las implementac
  * - Las llamadas a [debug] no hacen nada en modo producción.
  */
 interface AppLogger {
-    fun debug(tag: String, message: String, extra: Map<String, Any>? = null)
-    fun info(tag: String, message: String, extra: Map<String, Any>? = null)
-    fun warn(tag: String, message: String, anomalyType: String? = null, extra: Map<String, Any>? = null)
+    fun debug(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+    fun info(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+    fun warn(tag: String, message: String, throwable: Throwable? = null, anomalyType: String? = null, extra: Map<String, Any>? = null)
     fun error(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
     fun critical(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
     fun metric(name: String, value: Double, unit: String, tags: Map<String, String>? = null)
     fun flush()
 }
 ```
+
+### 4.1.1 `AppLoggerExtensions` — Extension Functions (commonMain)
+
+`AppLoggerExtensions.kt` extiende tanto `AppLogger` como `Any` con helpers que reducen boilerplate.
+Disponible en **todos los targets** (Android, iOS, JVM) sin dependencias adicionales.
+
+```kotlin
+// logger-core/src/commonMain/kotlin/com/applogger/core/AppLoggerExtensions.kt
+
+// ── Shorthands sobre AppLogger (tag explícito) ──────────────────────────────
+fun AppLogger.logD(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+fun AppLogger.logI(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+fun AppLogger.logW(tag: String, message: String, throwable: Throwable? = null, anomalyType: String? = null, extra: Map<String, Any>? = null)
+fun AppLogger.logE(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+fun AppLogger.logC(tag: String, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+
+// ── Extensión sobre Any (tag inferido del nombre de clase) ──────────────────
+fun Any.logTag(): String  // → this::class.simpleName ?: "Anonymous"
+
+fun Any.logD(logger: AppLogger, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+fun Any.logI(logger: AppLogger, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+fun Any.logW(logger: AppLogger, message: String, throwable: Throwable? = null, anomalyType: String? = null, extra: Map<String, Any>? = null)
+fun Any.logE(logger: AppLogger, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+fun Any.logC(logger: AppLogger, message: String, throwable: Throwable? = null, extra: Map<String, Any>? = null)
+```
+
+**Uso recomendado:**
+
+```kotlin
+class PlayerController(private val logger: AppLogger) {
+    fun onError(t: Throwable) {
+        // Tag inferido automáticamente → "PlayerController"
+        this.logE(logger, "Playback failed", throwable = t, extra = mapOf("codec" to "h264"))
+    }
+
+    fun onStart() {
+        // Shorthand sin inferencia de tag
+        logger.logI("PLAYER", "Playback started")
+    }
+}
+```
+
+---
 
 ### 4.2 `LogTransport` — Contrato de Transporte
 
@@ -395,17 +439,17 @@ object AppLoggerSDK : AppLogger {
     override fun error(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) =
         instance.error(tag, message, throwable, extra)
 
-    override fun info(tag: String, message: String, extra: Map<String, Any>?) =
-        instance.info(tag, message, extra)
+    override fun info(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) =
+        instance.info(tag, message, throwable, extra)
 
-    override fun warn(tag: String, message: String, anomalyType: String?, extra: Map<String, Any>?) =
-        instance.warn(tag, message, anomalyType, extra)
+    override fun warn(tag: String, message: String, throwable: Throwable?, anomalyType: String?, extra: Map<String, Any>?) =
+        instance.warn(tag, message, throwable, anomalyType, extra)
 
     override fun critical(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) =
         instance.critical(tag, message, throwable, extra)
 
-    override fun debug(tag: String, message: String, extra: Map<String, Any>?) =
-        instance.debug(tag, message, extra)
+    override fun debug(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) =
+        instance.debug(tag, message, throwable, extra)
 
     override fun metric(name: String, value: Double, unit: String, tags: Map<String, String>?) =
         instance.metric(name, value, unit, tags)
@@ -433,9 +477,9 @@ object AppLoggerSDK : AppLogger {
  * Garantiza que llamadas tempranas al SDK (en ContentProviders, etc.) no crasheen.
  */
 internal class NoOpLogger : AppLogger {
-    override fun debug(tag: String, message: String, extra: Map<String, Any>?) = Unit
-    override fun info(tag: String, message: String, extra: Map<String, Any>?) = Unit
-    override fun warn(tag: String, message: String, anomalyType: String?, extra: Map<String, Any>?) = Unit
+    override fun debug(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) = Unit
+    override fun info(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) = Unit
+    override fun warn(tag: String, message: String, throwable: Throwable?, anomalyType: String?, extra: Map<String, Any>?) = Unit
     override fun error(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) = Unit
     override fun critical(tag: String, message: String, throwable: Throwable?, extra: Map<String, Any>?) = Unit
     override fun metric(name: String, value: Double, unit: String, tags: Map<String, String>?) = Unit

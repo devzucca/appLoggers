@@ -279,13 +279,16 @@ Todo esto ocurre **fuera del hilo principal**.
 // Debug — solo visible en modo debug (Logcat)
 AppLoggerSDK.debug("TAG", "Mensaje de depuración")
 AppLoggerSDK.debug("TAG", "Con datos extra", extra = mapOf("key" to "value"))
+AppLoggerSDK.debug("TAG", "Estado inesperado", throwable = e)               // stacktrace opcional
 
 // Info — flujos normales de la app
 AppLoggerSDK.info("PLAYER", "Playback started")
 AppLoggerSDK.info("PLAYER", "Buffering", extra = mapOf("buffer_ms" to 500))
+AppLoggerSDK.info("PLAYER", "Recovery attempt", throwable = e)              // stacktrace opcional
 
 // Warn — comportamiento inesperado pero no fatal
 AppLoggerSDK.warn("NETWORK", "Slow response detected", anomalyType = "HIGH_LATENCY")
+AppLoggerSDK.warn("NETWORK", "Slow response", throwable = e, anomalyType = "HIGH_LATENCY") // con stacktrace
 
 // Error — fallos que el usuario probablemente nota
 AppLoggerSDK.error("PAYMENT", "Transaction failed", throwable = exception)
@@ -297,7 +300,41 @@ AppLoggerSDK.critical("AUTH", "Token refresh failed completely", throwable = exc
 AppLoggerSDK.metric("screen_load_time", 1234.0, "ms", tags = mapOf("screen" to "HomeScreen"))
 ```
 
-### 5.2 Qué loguear en cada nivel
+### 5.2 Extension Functions — Tag Automático
+
+El módulo `logger-core` incluye extension functions en `commonMain` que eliminan el tag manual en clases con logger inyectado. El tag se infiere del nombre simple de la clase (`this::class.simpleName`).
+
+```kotlin
+import com.applogger.core.logD
+import com.applogger.core.logI
+import com.applogger.core.logW
+import com.applogger.core.logE
+import com.applogger.core.logC
+import com.applogger.core.logTag
+
+class PlaybackRepository(private val logger: AppLogger) {
+
+    fun load(id: String) {
+        this.logI(logger, "Loading content", extra = mapOf("content_id" to id))
+        // Tag automático → "PlaybackRepository"
+    }
+
+    fun handleError(t: Throwable) {
+        this.logE(logger, "Content load failed", throwable = t)
+    }
+
+    fun warnRetry(t: Throwable) {
+        this.logW(logger, "Retrying segment", throwable = t, anomalyType = "SEGMENT_RETRY")
+    }
+}
+```
+
+También se pueden usar los shorthands directos sobre `AppLogger` cuando el tag es explícito:
+
+```kotlin
+logger.logE("PLAYER", "Segment failed", throwable = e)
+logger.logW("NETWORK", "Timeout", anomalyType = "TIMEOUT")
+```
 
 | Nivel | Cuándo usarlo | Ejemplos |
 |---|---|---|
@@ -308,7 +345,7 @@ AppLoggerSDK.metric("screen_load_time", 1234.0, "ms", tags = mapOf("screen" to "
 | `critical` | Fallos que bloquean la app | Corrupción de estado, fallo de inicialización |
 | `metric` | Datos cuantitativos de performance | Tiempos de carga, uso de memoria, buffer |
 
-### 5.3 Buenas Prácticas de Contenido
+### 5.4 Buenas Prácticas de Contenido
 
 ```kotlin
 // ✅ Loguear contexto técnico, no datos del usuario
