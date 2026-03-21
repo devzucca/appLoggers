@@ -548,7 +548,7 @@ func TestTelemetryQueryProjectProfileAmbiguousWorkspaceFails(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected ambiguous workspace resolution to fail")
 	}
-	if !strings.Contains(string(out), "multiple projects match current workspace") {
+	if !strings.Contains(string(out), "multiple projects") || !strings.Contains(string(out), "use --project or APPLOGGER_PROJECT") {
 		t.Fatalf("expected ambiguity error, output=%s", string(out))
 	}
 }
