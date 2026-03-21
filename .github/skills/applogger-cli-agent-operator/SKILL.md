@@ -36,7 +36,7 @@ Bootstrap rules:
 1. Verify install by running `applogger-cli version --output json`.
 2. If `PATH` changed during installation, start a new shell or invoke the installed binary by absolute path once.
 3. To pin a specific version, set `APPLOGGER_CLI_VERSION=applogger-cli-vX.Y.Z` before invoking the installer.
-4. On macOS/Linux, the bash installer validates SHA-256 checksums for release assets when verification tools are available.
+4. On macOS/Linux, the bash installer enforces SHA-256 verification for release assets and fails if neither `sha256sum` nor `shasum` is available.
 
 ## Standard Command Set
 

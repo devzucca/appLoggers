@@ -56,7 +56,7 @@ Reglas:
 
 - Si el instalador cambia `PATH`, abrir una nueva shell o ejecutar por ruta absoluta una vez.
 - Para fijar version: definir `APPLOGGER_CLI_VERSION=applogger-cli-vX.Y.Z` antes de instalar.
-- En macOS y Linux el instalador valida checksums SHA-256 cuando las herramientas del sistema estan disponibles.
+- En macOS y Linux el instalador exige verificacion SHA-256 y falla si no existe `sha256sum` ni `shasum`.
 
 ### 1. Agent Contract Discovery
 
