@@ -306,6 +306,80 @@ func TestTelemetryQueryMetricsNameFilterJSON(t *testing.T) {
 	}
 }
 
+func TestTelemetryQueryLogsAnomalyTypeFilterAndExtraJSON(t *testing.T) {
+	binary := buildCLI(t)
+	mockSupabase := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/rest/v1/app_logs" {
+			http.Error(w, "unexpected path", http.StatusNotFound)
+			return
+		}
+		if r.URL.Query().Get("level") != "eq.WARN" {
+			http.Error(w, "unexpected level filter", http.StatusBadRequest)
+			return
+		}
+		if r.URL.Query().Get("extra->>anomaly_type") != "eq.slow_response" {
+			http.Error(w, "unexpected anomaly_type filter", http.StatusBadRequest)
+			return
+		}
+		if !strings.Contains(r.URL.RawQuery, "select=id%2Ccreated_at%2Clevel%2Ctag%2Cmessage%2Csession_id%2Csdk_version%2Cextra") {
+			http.Error(w, "expected extra in select columns", http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[
+			{"id":"1","created_at":"2026-03-01T00:00:00Z","level":"WARN","tag":"network","message":"slow call","session_id":"s-1","sdk_version":"dev","extra":{"anomaly_type":"slow_response","latency_ms":"2500"}}
+		]`))
+	}))
+	defer mockSupabase.Close()
+
+	cmd := exec.Command(
+		binary,
+		"telemetry",
+		"query",
+		"--source", "logs",
+		"--severity", "warn",
+		"--anomaly-type", "slow_response",
+		"--limit", "10",
+		"--output", "json",
+	)
+	cmd.Env = append(cmd.Env,
+		"APPLOGGER_SUPABASE_URL="+mockSupabase.URL,
+		"APPLOGGER_SUPABASE_KEY=test-key",
+	)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("telemetry anomaly_type query failed: %v, output=%s", err, string(out))
+	}
+	text := string(out)
+	if !strings.Contains(text, "\"anomaly_type\": \"slow_response\"") {
+		t.Fatalf("expected anomaly_type echo in response, output=%s", text)
+	}
+	if !strings.Contains(text, "\"extra\": {") {
+		t.Fatalf("expected extra object in response rows, output=%s", text)
+	}
+	if !strings.Contains(text, "\"latency_ms\": \"2500\"") {
+		t.Fatalf("expected extra payload content in response rows, output=%s", text)
+	}
+	if !strings.Contains(text, "\"severity\": \"warn\"") {
+		t.Fatalf("expected severity echo in request block, output=%s", text)
+	}
+}
+
+func TestTelemetryQueryAnomalyTypeInvalidForMetrics(t *testing.T) {
+	binary := buildCLI(t)
+	cmd := exec.Command(binary, "telemetry", "query", "--source", "metrics", "--anomaly-type", "slow_response", "--output", "json")
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatal("expected usage error for --anomaly-type with metrics source")
+	}
+	if cmd.ProcessState.ExitCode() != 2 {
+		t.Fatalf("expected exit code 2, got %d", cmd.ProcessState.ExitCode())
+	}
+	if !strings.Contains(string(out), "\"error_kind\": \"usage_error\"") {
+		t.Fatalf("expected usage error envelope, output=%s", string(out))
+	}
+}
+
 func TestTelemetryQueryNameFilterInvalidForLogs(t *testing.T) {
 	binary := buildCLI(t)
 	cmd := exec.Command(binary, "telemetry", "query", "--source", "logs", "--name", "response_time_ms", "--output", "json")
