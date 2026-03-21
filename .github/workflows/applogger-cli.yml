@@ -57,7 +57,7 @@ jobs:
 
       - name: Run tests with coverage
         working-directory: cli
-        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        run: go test -v -race "-coverprofile=coverage.out" "-covermode=atomic" ./...
 
       - name: Upload coverage to CodeCov
         if: matrix.os == 'linux'

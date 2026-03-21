@@ -10,8 +10,8 @@ import (
 )
 
 type cliProjectFile struct {
-	DefaultProject string               `json:"default_project"`
-	Projects       []cliProjectProfile  `json:"projects"`
+	DefaultProject string              `json:"default_project"`
+	Projects       []cliProjectProfile `json:"projects"`
 }
 
 type cliProjectProfile struct {

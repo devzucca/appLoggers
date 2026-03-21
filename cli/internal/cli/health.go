@@ -8,12 +8,12 @@ import (
 )
 
 type healthPayload struct {
-	OK        bool   `json:"ok"`
-	Status    string `json:"status"`
-	Version   string `json:"version"`
-	Project   string `json:"project,omitempty"`
+	OK           bool   `json:"ok"`
+	Status       string `json:"status"`
+	Version      string `json:"version"`
+	Project      string `json:"project,omitempty"`
 	ConfigSource string `json:"config_source,omitempty"`
-	Timestamp string `json:"timestamp"`
+	Timestamp    string `json:"timestamp"`
 }
 
 func newHealthCommand() *cobra.Command {
