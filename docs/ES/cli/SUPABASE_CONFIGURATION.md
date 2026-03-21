@@ -57,12 +57,90 @@ Variables requeridas para CLI:
 - `appLogger_supabaseUrl`
 - `appLogger_supabaseKey` (service_role)
 
+Aliases compatibles:
+
+- `APPLOGGER_SUPABASE_URL`
+- `APPLOGGER_SUPABASE_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+
 Opcionales:
 
 - `appLogger_supabaseSchema` (default `public`)
 - `appLogger_supabaseLogTable` (default `app_logs`)
 - `appLogger_supabaseMetricTable` (default `app_metrics`)
 - `appLogger_supabaseTimeoutSeconds` (default `15`)
+
+## Paso 2b - Configuracion multi-proyecto para CLI + Wails
+
+Cuando el CLI opere varias aplicaciones de telemetria distintas
+(`klinema`, `klinematv`, etc.), la configuracion recomendada ya no es un solo
+par global de variables, sino un registro de proyectos compartido entre el CLI
+y la futura app de escritorio en Wails.
+
+Variables de control:
+
+- `APPLOGGER_CONFIG`: ruta al archivo JSON de proyectos.
+- `APPLOGGER_PROJECT`: seleccion explicita del proyecto activo.
+- `--config`: override por linea de comandos.
+- `--project`: override por linea de comandos.
+
+Ruta default del archivo:
+
+- Windows: `%AppData%/applogger/cli.json`
+- Linux/macOS: `$(os.UserConfigDir)/applogger/cli.json`
+
+Ejemplo recomendado:
+
+```json
+{
+  "default_project": "klinema",
+  "projects": [
+    {
+      "name": "klinema",
+      "display_name": "Klinema Mobile",
+      "workspace_roots": [
+        "D:/workspace/klinema"
+      ],
+      "supabase": {
+        "url": "https://klinema.supabase.co",
+        "api_key_env": "APPLOGGER_KLINEMA_SUPABASE_KEY",
+        "schema": "public",
+        "logs_table": "app_logs",
+        "metrics_table": "app_metrics",
+        "timeout_seconds": 15
+      }
+    },
+    {
+      "name": "klinematv",
+      "display_name": "Klinema TV",
+      "workspace_roots": [
+        "D:/workspace/klinematv"
+      ],
+      "supabase": {
+        "url": "https://klinematv.supabase.co",
+        "api_key_env": "APPLOGGER_KLINEMATV_SUPABASE_KEY"
+      }
+    }
+  ]
+}
+```
+
+Precedencia de resolucion:
+
+1. `--project`
+2. `APPLOGGER_PROJECT`
+3. Matching por `workspace_roots` contra el directorio actual
+4. `default_project`
+5. Unico proyecto configurado
+6. Fallback legacy a `appLogger_supabase*` / `APPLOGGER_SUPABASE_*` / `SUPABASE_*`
+
+Practica corporativa recomendada:
+
+- Guardar solo URL y metadata en el JSON.
+- Guardar el `service_role` en variables de entorno o secreto del sistema usando `api_key_env`.
+- Hacer que Wails administre el registro de proyectos y lance el CLI con el mismo modelo.
+- En SSE transmitir el proyecto resuelto y nunca la credencial cruda.
 
 ## Paso 3 - Crear usuario operativo del CLI
 
@@ -122,6 +200,15 @@ Ejemplo GitHub Actions:
 env:
   appLogger_supabaseUrl: ${{ secrets.APPLOGGER_SUPABASE_URL }}
   appLogger_supabaseKey: ${{ secrets.APPLOGGER_SUPABASE_KEY }}
+```
+
+Para runners multi-proyecto, tambien puede inyectarse:
+
+```yaml
+env:
+  APPLOGGER_CONFIG: /opt/applogger/cli.json
+  APPLOGGER_PROJECT: klinema
+  APPLOGGER_KLINEMA_SUPABASE_KEY: ${{ secrets.APPLOGGER_KLINEMA_SUPABASE_KEY }}
 ```
 
 Para `act` en local, definir el mismo par en `.act.secrets`. Si el workflow referencia un secret ausente, `act` lo inyecta vacio.

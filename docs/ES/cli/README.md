@@ -24,6 +24,7 @@
 
 - [Instalación Rápida](#instalación-rápida)
 - [Configuración Supabase Detallada](#configuración-supabase-detallada)
+- [Selección de Proyecto](#selección-de-proyecto)
 - [Comandos Principales](#comandos-principales)
 - [Consultas de Telemetría](#consultas-de-telemetría)
 - [Salidas (text/json/agent)](#salidas-texjsonarent)
@@ -50,6 +51,32 @@ Para una configuración corporativa completa (migraciones, RLS, service_role,
 usuario operativo del CLI, hardening y troubleshooting), ver:
 
 - [SUPABASE_CONFIGURATION.md](./SUPABASE_CONFIGURATION.md)
+
+## Selección de Proyecto
+
+El CLI ya soporta operación multi-proyecto para escenarios donde una misma
+estación o futura app en Wails debe consultar telemetría de varias apps
+distintas (`klinema`, `klinematv`, etc.).
+
+Precedencia de resolución:
+
+1. `--project`
+2. `APPLOGGER_PROJECT`
+3. Detección por `workspace_roots` desde `APPLOGGER_CONFIG`
+4. `default_project`
+5. Único proyecto configurado
+6. Variables legacy `appLogger_supabase*`, `APPLOGGER_SUPABASE_*`, `SUPABASE_*`
+
+Variables nuevas:
+
+- `APPLOGGER_CONFIG`: ruta al archivo JSON de proyectos
+- `APPLOGGER_PROJECT`: nombre del proyecto activo
+
+Ejemplo rápido:
+
+```bash
+applogger-cli --project klinema telemetry query --source logs --severity error --output json
+```
 
 ```bash
 # Linux / macOS
@@ -545,6 +572,9 @@ Ver [AGENT_OPERATOR_SKILL.md](../agents/applogger-cli-agent-operator/SKILL.md) p
 ### Backwards Compatibility
 
 Fallback aliases para compatibilidad:
+
+- `APPLOGGER_SUPABASE_URL` → `appLogger_supabaseUrl`
+- `APPLOGGER_SUPABASE_KEY` → `appLogger_supabaseKey`
 - `SUPABASE_URL` → `appLogger_supabaseUrl`
 - `SUPABASE_KEY` → `appLogger_supabaseKey`
 

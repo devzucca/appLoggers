@@ -8,6 +8,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 
 ## [Unreleased]
 
+### Added
+- **CLI project profiles**: `APPLOGGER_CONFIG` and `--config` now support a shared JSON config file for multiple telemetry apps/projects.
+- **Project selection controls**: `APPLOGGER_PROJECT` and `--project` allow explicit project selection when multiple Supabase backends exist.
+- **Workspace autodetection**: the CLI can resolve the active telemetry project from the current working directory when `workspace_roots` are configured.
+- **Machine-readable project context**: `health` and telemetry JSON/agent responses now include the resolved `project` and `config_source` when available.
+- **Corporate-ready distribution pipeline**: CLI release workflow now contains conditional publication jobs for Homebrew, Scoop, and Winget repositories.
+
+### Changed
+- **CLI CI gate hardening**: multi-OS CLI tests now fail the pipeline on every protected runner instead of tolerating macOS or Windows failures.
+- **Release metadata embedding**: CLI binaries now embed version, commit, and build date from valid linker targets and are verified in a governance gate before release.
+- **Security scanner reproducibility**: `gosec` is installed from a pinned immutable release instead of a mutable branch reference.
+- **Supabase error guidance**: CLI configuration errors now mention `APPLOGGER_SUPABASE_URL` and `APPLOGGER_SUPABASE_KEY` aliases explicitly.
+- **Repository markdown governance**: markdown quality is now enforced repository-wide through a centralized `.markdownlint.jsonc` policy aligned with the real documentation style.
+
+### Security
+- Release governance now blocks `main` and tag deliveries when embedded CLI build metadata remains at `dev`, `none`, or `unknown`.
+- Package-manager publication remains gated behind explicit repository variables and secrets, reducing accidental distribution drift.
+
 ### Planned
 - `logger-transport-firebase` module — transport to Firebase Realtime Database
 - Support for `logger-transport-grpc` — direct delivery via gRPC to a custom server

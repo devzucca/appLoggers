@@ -72,8 +72,74 @@ The CLI reads Supabase configuration from environment variables:
 
 Fallback aliases are supported for compatibility:
 
+- `APPLOGGER_SUPABASE_URL`
+- `APPLOGGER_SUPABASE_KEY`
 - `SUPABASE_URL`
 - `SUPABASE_KEY`
+
+## Multi-Project Configuration
+
+For corporate setups with multiple telemetry apps, the CLI also supports a shared
+project config file. This is the recommended model when the CLI will later be
+hosted or orchestrated by a Wails desktop app and streamed over SSE.
+
+Selection precedence:
+
+1. `--project <name>`
+2. `APPLOGGER_PROJECT`
+3. Workspace autodetection via `workspace_roots`
+4. `default_project`
+5. Single configured project
+6. Legacy environment variables (`appLogger_supabase*`, `APPLOGGER_SUPABASE_*`, `SUPABASE_*`)
+
+Config file resolution:
+
+- `--config <path>`
+- `APPLOGGER_CONFIG`
+- Default path: `os.UserConfigDir()/applogger/cli.json`
+
+Recommended JSON structure:
+
+```json
+{
+  "default_project": "klinema",
+  "projects": [
+    {
+      "name": "klinema",
+      "display_name": "Klinema Mobile",
+      "workspace_roots": [
+        "D:/workspace/klinema"
+      ],
+      "supabase": {
+        "url": "https://klinema.supabase.co",
+        "api_key_env": "APPLOGGER_KLINEMA_SUPABASE_KEY",
+        "schema": "public",
+        "logs_table": "app_logs",
+        "metrics_table": "app_metrics",
+        "timeout_seconds": 15
+      }
+    },
+    {
+      "name": "klinematv",
+      "display_name": "Klinema TV",
+      "workspace_roots": [
+        "D:/workspace/klinematv"
+      ],
+      "supabase": {
+        "url": "https://klinematv.supabase.co",
+        "api_key_env": "APPLOGGER_KLINEMATV_SUPABASE_KEY"
+      }
+    }
+  ]
+}
+```
+
+Operational guidance:
+
+- Keep `service_role` secrets outside the JSON file whenever possible by using `api_key_env`.
+- Let Wails own the project registry and spawn the CLI with the same config model.
+- SSE should transport resolved project context (`project`, `config_source`) rather than raw secrets.
+- When only one project is configured, the CLI auto-selects it to keep local workflows simple.
 
 ### Export Variables (PowerShell)
 
@@ -131,6 +197,12 @@ applogger-cli telemetry agent-response \
 # Health check for agents
 applogger-cli health --output json
 
+# Explicit project selection
+applogger-cli --project klinema telemetry query --source logs --severity error --output json
+
+# Workspace-based autodetection via APPLOGGER_CONFIG
+APPLOGGER_CONFIG="$HOME/.config/applogger/cli.json" applogger-cli telemetry query --source logs --limit 25 --output json
+
 # Minimal telemetry query
 applogger-cli telemetry query
 
@@ -174,6 +246,7 @@ applogger-cli telemetry query \
 - Log queries include the `extra` object when present.
 - `warn(..., anomalyType = "...")` is exposed through `extra.anomaly_type`.
 - Use `--anomaly-type` to filter warning anomalies on the server side.
+- Project-based responses include `project` and `config_source` when the CLI resolved a project profile.
 
 ## Development
 
