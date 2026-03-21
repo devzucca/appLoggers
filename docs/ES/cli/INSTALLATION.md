@@ -78,11 +78,19 @@ go build -o applogger-cli ./cmd/applogger-cli
 sudo mv applogger-cli /usr/local/bin/
 ```
 
-### Opción 4: Homebrew (macOS, Linux)
+### Opción 4: Homebrew / Scoop / Winget (manifiestos de publicación)
 
-```bash
-# Aun no disponible
-```
+Desde `applogger-cli-v*`, el workflow de release genera y publica estos manifiestos como assets:
+
+- `manifests/homebrew/applogger-cli.rb`
+- `manifests/scoop/applogger-cli.json`
+- `manifests/winget/DevZucca.AppLoggerCLI*.yaml`
+
+Esto deja la publicación lista para:
+
+- Tap Homebrew propio
+- Bucket Scoop propio
+- PR al repositorio `microsoft/winget-pkgs`
 
 ---
 
@@ -172,10 +180,20 @@ sudo mv applogger-cli /usr/local/bin/
 chmod +x /usr/local/bin/applogger-cli
 ```
 
-#### C. Homebrew (Cuando esté disponible)
+#### C. Homebrew (con tap propio)
 
 ```bash
+# 1) copiar el formula generado desde los assets de release
+# 2) publicarlo en tu tap (ej: devzucca/homebrew-applogger)
 brew install devzucca/apploggers/applogger-cli
+```
+
+#### D. Winget (publicación comunitaria)
+
+```powershell
+# usar los manifiestos winget generados en el release
+# y abrir PR a microsoft/winget-pkgs
+winget install DevZucca.AppLoggerCLI
 ```
 
 ---

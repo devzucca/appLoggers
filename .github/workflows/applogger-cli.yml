@@ -242,6 +242,123 @@ jobs:
             sha256sum "$file" > "$file.sha256"
           done
 
+      - name: Generate package manager manifests
+        run: |
+          VERSION="${GITHUB_REF_NAME#applogger-cli-v}"
+          REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
+          DOWNLOAD_BASE="${REPO_URL}/releases/download/${GITHUB_REF_NAME}"
+
+          DARWIN_AMD64_SHA="$(cut -d' ' -f1 artifacts/applogger-cli-darwin-amd64/applogger-cli-darwin-amd64.sha256)"
+          DARWIN_ARM64_SHA="$(cut -d' ' -f1 artifacts/applogger-cli-darwin-arm64/applogger-cli-darwin-arm64.sha256)"
+          WINDOWS_AMD64_SHA="$(cut -d' ' -f1 artifacts/applogger-cli-windows-amd64/applogger-cli-windows-amd64.exe.sha256)"
+
+          mkdir -p artifacts/manifests/homebrew
+          mkdir -p artifacts/manifests/scoop
+          mkdir -p artifacts/manifests/winget
+
+          cat > artifacts/manifests/homebrew/applogger-cli.rb <<EOF
+          class ApploggerCli < Formula
+            desc "AppLogger telemetry CLI"
+            homepage "${REPO_URL}"
+            version "${VERSION}"
+            license "Apache-2.0"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "${DOWNLOAD_BASE}/applogger-cli-darwin-arm64"
+                sha256 "${DARWIN_ARM64_SHA}"
+              else
+                url "${DOWNLOAD_BASE}/applogger-cli-darwin-amd64"
+                sha256 "${DARWIN_AMD64_SHA}"
+              end
+            end
+
+            def install
+              if Hardware::CPU.arm?
+                bin.install "applogger-cli-darwin-arm64" => "applogger-cli"
+              else
+                bin.install "applogger-cli-darwin-amd64" => "applogger-cli"
+              end
+            end
+
+            test do
+              assert_match "applogger-cli", shell_output("#{bin}/applogger-cli version --output text")
+            end
+          end
+          EOF
+
+          cat > artifacts/manifests/scoop/applogger-cli.json <<EOF
+          {
+            "version": "${VERSION}",
+            "description": "AppLogger telemetry CLI",
+            "homepage": "${REPO_URL}",
+            "license": "Apache-2.0",
+            "architecture": {
+              "64bit": {
+                "url": "${DOWNLOAD_BASE}/applogger-cli-windows-amd64.exe",
+                "hash": "${WINDOWS_AMD64_SHA}"
+              }
+            },
+            "bin": "applogger-cli-windows-amd64.exe",
+            "checkver": {
+              "github": "devzucca/appLoggers"
+            },
+            "autoupdate": {
+              "architecture": {
+                "64bit": {
+                  "url": "${DOWNLOAD_BASE}/applogger-cli-windows-amd64.exe"
+                }
+              }
+            }
+          }
+          EOF
+
+          cat > artifacts/manifests/winget/DevZucca.AppLoggerCLI.yaml <<EOF
+          PackageIdentifier: DevZucca.AppLoggerCLI
+          PackageVersion: ${VERSION}
+          DefaultLocale: en-US
+          ManifestType: version
+          ManifestVersion: 1.6.0
+          EOF
+
+          cat > artifacts/manifests/winget/DevZucca.AppLoggerCLI.locale.en-US.yaml <<EOF
+          PackageIdentifier: DevZucca.AppLoggerCLI
+          PackageVersion: ${VERSION}
+          PackageLocale: en-US
+          Publisher: DevZucca
+          PackageName: AppLogger CLI
+          License: Apache-2.0
+          ShortDescription: AppLogger telemetry CLI
+          ManifestType: defaultLocale
+          ManifestVersion: 1.6.0
+          EOF
+
+          cat > artifacts/manifests/winget/DevZucca.AppLoggerCLI.installer.yaml <<EOF
+          PackageIdentifier: DevZucca.AppLoggerCLI
+          PackageVersion: ${VERSION}
+          Installers:
+            - Architecture: x64
+              InstallerType: portable
+              InstallerUrl: ${DOWNLOAD_BASE}/applogger-cli-windows-amd64.exe
+              InstallerSha256: ${WINDOWS_AMD64_SHA}
+              Commands:
+                - applogger-cli
+          ManifestType: installer
+          ManifestVersion: 1.6.0
+          EOF
+
+          cat > artifacts/manifests/README.md <<EOF
+          # Package Manager Manifests
+
+          Generated from release tag: ${GITHUB_REF_NAME}
+
+          - Homebrew formula: manifests/homebrew/applogger-cli.rb
+          - Scoop manifest: manifests/scoop/applogger-cli.json
+          - Winget manifests: manifests/winget/*.yaml
+
+          These files are release artifacts ready to publish in taps/buckets/community repos.
+          EOF
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:

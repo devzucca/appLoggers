@@ -201,4 +201,8 @@ Syncbin plugin metadata lives in `plugin-metadata.yaml`.
   - `applogger-cli-darwin-amd64`
   - `applogger-cli-darwin-arm64`
   - `applogger-cli-windows-amd64.exe`
+  - `manifests/homebrew/applogger-cli.rb`
+  - `manifests/scoop/applogger-cli.json`
+  - `manifests/winget/DevZucca.AppLoggerCLI*.yaml`
 - Each asset is accompanied by a `.sha256` checksum file.
+- Package manager manifests are generated automatically on every `applogger-cli-v*` tag release.
