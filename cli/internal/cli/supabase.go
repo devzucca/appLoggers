@@ -28,10 +28,10 @@ func loadSupabaseConfig() (supabaseConfig, error) {
 	}
 
 	if cfg.URL == "" {
-		return cfg, fmt.Errorf("missing Supabase URL: set appLogger_supabaseUrl or SUPABASE_URL")
+		return cfg, fmt.Errorf("missing Supabase URL: set appLogger_supabaseUrl, APPLOGGER_SUPABASE_URL, or SUPABASE_URL")
 	}
 	if cfg.APIKey == "" {
-		return cfg, fmt.Errorf("missing Supabase API key: set appLogger_supabaseKey or SUPABASE_KEY (service_role key required for CLI reads)")
+		return cfg, fmt.Errorf("missing Supabase API key: set appLogger_supabaseKey, APPLOGGER_SUPABASE_KEY, or SUPABASE_KEY (service_role key required for CLI reads)")
 	}
 	if cfg.Schema == "" {
 		cfg.Schema = "public"
